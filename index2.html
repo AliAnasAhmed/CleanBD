@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CleanBD — Bangladesh Environmental Reporting System</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg-primary:#f5f7fa;--bg-secondary:#ffffff;--bg-tertiary:#f0f2f5;
+--text-primary:#1a1d23;--text-secondary:#5f6368;--text-muted:#9aa0a6;
+--border:#e1e5ea;--accent:#006a4e;--accent-light:#00896a;--accent-bg:rgba(0,106,78,0.08);
+--danger:#ea4335;--warning:#fbbc04;--info:#4285f4;--success:#34a853;
+--shadow-sm:0 1px 3px rgba(0,0,0,0.06);--shadow-md:0 4px 12px rgba(0,0,0,0.08);
+--shadow-lg:0 8px 30px rgba(0,0,0,0.12);
+--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-xl:20px;
+--transition:all 0.25s cubic-bezier(0.4,0,0.2,1);--sidebar-width:280px;
+}
+[data-theme="dark"]{
+--bg-primary:#0f1117;--bg-secondary:#1a1d27;--bg-tertiary:#252830;
+--text-primary:#e8eaed;--text-secondary:#9aa0a6;--text-muted:#5f6368;
+--border:#2d3039;--accent:#00c48c;--accent-light:#00e6a5;--accent-bg:rgba(0,196,140,0.1);
+--shadow-sm:0 1px 3px rgba(0,0,0,0.2);--shadow-md:0 4px 12px rgba(0,0,0,0.3);
+--shadow-lg:0 8px 30px rgba(0,0,0,0.4);
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-primary);color:var(--text-primary);overflow:hidden;height:100vh}
+
+/* ===== AUTH GATE ===== */
+.auth-gate{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#004d3a 0%,#006a4e 30%,#00896a 60%,#00a878 100%);transition:opacity 0.5s ease,transform 0.5s ease}
+.auth-gate.hidden{opacity:0;pointer-events:none;transform:scale(1.02)}
+.auth-gate::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.auth-bg-shapes{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.auth-bg-shapes .shape{position:absolute;border-radius:50%;opacity:0.06;background:white}
+.auth-bg-shapes .shape:nth-child(1){width:400px;height:400px;top:-100px;right:-100px;animation:float 20s ease-in-out infinite}
+.auth-bg-shapes .shape:nth-child(2){width:300px;height:300px;bottom:-80px;left:-80px;animation:float 25s ease-in-out infinite reverse}
+.auth-bg-shapes .shape:nth-child(3){width:200px;height:200px;top:40%;left:20%;animation:float 18s ease-in-out infinite 2s}
+.auth-bg-shapes .shape:nth-child(4){width:150px;height:150px;top:20%;right:30%;animation:float 22s ease-in-out infinite 4s}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-30px) rotate(5deg)}}
+
+.auth-container{position:relative;z-index:1;display:flex;width:90%;max-width:1000px;min-height:580px;background:var(--bg-secondary);border-radius:24px;overflow:hidden;box-shadow:0 25px 80px rgba(0,0,0,0.3)}
+.auth-left{flex:1;background:linear-gradient(160deg,#006a4e,#00a878);padding:48px 40px;display:flex;flex-direction:column;justify-content:space-between;color:white;position:relative;overflow:hidden}
+.auth-left::after{content:'';position:absolute;bottom:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.05)}
+.auth-brand{display:flex;align-items:center;gap:14px;margin-bottom:auto}
+.auth-brand-icon{width:52px;height:52px;background:rgba(255,255,255,0.15);backdrop-filter:blur(10px);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid rgba(255,255,255,0.2)}
+.auth-brand h2{font-size:1.4rem;font-weight:700;letter-spacing:-0.5px}
+.auth-brand span{font-size:0.7rem;opacity:0.7;text-transform:uppercase;letter-spacing:1.5px}
+.auth-hero{margin:auto 0;padding:20px 0}
+.auth-hero h1{font-size:1.8rem;font-weight:700;line-height:1.3;margin-bottom:12px}
+.auth-hero p{font-size:0.9rem;opacity:0.85;line-height:1.6;margin-bottom:24px}
+.auth-features{display:flex;flex-direction:column;gap:14px}
+.auth-feature{display:flex;align-items:center;gap:12px;font-size:0.85rem;opacity:0.9}
+.auth-feature-icon{width:36px;height:36px;background:rgba(255,255,255,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.auth-footer-brand{font-size:0.7rem;opacity:0.5;margin-top:auto;padding-top:20px}
+
+.auth-right{flex:1;padding:48px 40px;display:flex;flex-direction:column;justify-content:center;overflow-y:auto}
+.auth-right::-webkit-scrollbar{width:4px}
+.auth-right::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.auth-tabs{display:flex;gap:4px;background:var(--bg-tertiary);border-radius:12px;padding:4px;margin-bottom:28px}
+.auth-tab{flex:1;padding:10px;border:none;background:transparent;border-radius:10px;font-size:0.85rem;font-weight:600;cursor:pointer;color:var(--text-muted);transition:var(--transition);font-family:inherit}
+.auth-tab.active{background:var(--bg-secondary);color:var(--accent);box-shadow:var(--shadow-sm)}
+.auth-form{display:none}
+.auth-form.active{display:block;animation:fadeUp 0.3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.auth-form h3{font-size:1.2rem;font-weight:700;margin-bottom:4px}
+.auth-form .auth-subtitle{font-size:0.8rem;color:var(--text-muted);margin-bottom:24px}
+.auth-input-group{margin-bottom:16px}
+.auth-input-group label{display:block;font-size:0.72rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.3px}
+.auth-input-wrap{position:relative}
+.auth-input-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.85rem}
+.auth-input{width:100%;padding:12px 14px 12px 42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.85rem;background:var(--bg-primary);color:var(--text-primary);transition:var(--transition);font-family:inherit}
+.auth-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.auth-input::placeholder{color:var(--text-muted)}
+.auth-submit{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent-light));color:white;border:none;border-radius:var(--radius-sm);font-size:0.9rem;font-weight:600;cursor:pointer;transition:var(--transition);font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
+.auth-submit:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,106,78,0.35)}
+.auth-submit:active{transform:translateY(0)}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:20px 0;font-size:0.75rem;color:var(--text-muted)}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.auth-social{display:flex;gap:10px;margin-bottom:20px}
+.auth-social-btn{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-size:0.8rem;font-weight:500;color:var(--text-secondary);transition:var(--transition);font-family:inherit}
+.auth-social-btn:hover{border-color:var(--accent);background:var(--accent-bg)}
+.auth-switch{text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:16px}
+.auth-switch a{color:var(--accent);font-weight:600;cursor:pointer;text-decoration:none}
+.auth-switch a:hover{text-decoration:underline}
+.auth-guest{text-align:center;margin-top:12px}
+.auth-guest button{background:none;border:none;color:var(--text-muted);font-size:0.78rem;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:2px}
+.auth-guest button:hover{color:var(--accent)}
+.auth-error{background:rgba(234,67,53,0.08);border:1px solid rgba(234,67,53,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:0.8rem;color:var(--danger);margin-bottom:16px;display:none;align-items:center;gap:8px}
+.auth-error.show{display:flex}
+.auth-success{background:rgba(52,168,83,0.08);border:1px solid rgba(52,168,83,0.2);border-radius:var(--radius-sm);padding:10px 14px;font-size:0.8rem;color:var(--success);margin-bottom:16px;display:none;align-items:center;gap:8px}
+.auth-success.show{display:flex}
+.password-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.85rem}
+.auth-remember{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:0.8rem}
+.auth-remember label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-secondary)}
+.auth-remember a{color:var(--accent);text-decoration:none;font-weight:500;cursor:pointer}
+
+/* ===== APP LAYOUT ===== */
+.app-layout{display:flex;height:100vh;opacity:0;pointer-events:none;transition:opacity 0.4s ease}
+.app-layout.visible{opacity:1;pointer-events:all}
+.sidebar{width:var(--sidebar-width);background:var(--bg-secondary);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:var(--transition)}
+.sidebar-header{padding:20px;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent-light));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:white}
+.logo-text h1{font-size:1.1rem;font-weight:700}
+.logo-text span{font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px}
+.nav-section{padding:16px 12px;flex:1;overflow-y:auto}
+.nav-section::-webkit-scrollbar{width:4px}
+.nav-section::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.nav-label{font-size:0.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;padding:8px 12px;margin-top:8px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);color:var(--text-secondary);font-size:0.85rem;font-weight:500;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.nav-item:hover{background:var(--bg-tertiary);color:var(--text-primary)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:600}
+.nav-item i{width:20px;text-align:center;font-size:0.9rem}
+.nav-badge{margin-left:auto;background:var(--danger);color:white;font-size:0.6rem;padding:2px 6px;border-radius:10px;font-weight:700}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
+.theme-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:var(--radius-sm);background:var(--bg-tertiary);cursor:pointer;border:none;width:100%;color:var(--text-secondary);font-size:0.8rem;font-family:inherit}
+.toggle-switch{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;transition:var(--transition)}
+.toggle-switch::after{content:'';width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:var(--transition);box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+[data-theme="dark"] .toggle-switch{background:var(--accent)}
+[data-theme="dark"] .toggle-switch::after{left:18px}
+.main-content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border)}
+.top-bar-left{display:flex;align-items:center;gap:16px}
+.page-title{font-size:1.1rem;font-weight:700}
+.page-subtitle{font-size:0.75rem;color:var(--text-muted)}
+.top-bar-right{display:flex;align-items:center;gap:12px}
+.top-btn{width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);transition:var(--transition);position:relative}
+.top-btn:hover{background:var(--bg-tertiary);color:var(--text-primary)}
+.notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--bg-secondary)}
+.sos-btn{padding:8px 16px;background:var(--danger);color:white;border:none;border-radius:var(--radius-sm);font-size:0.75rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:var(--transition);font-family:inherit}
+.sos-btn:hover{background:#d32f2f;transform:scale(1.02)}
+.user-profile-btn{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-secondary);cursor:pointer;transition:var(--transition)}
+.user-profile-btn:hover{background:var(--bg-tertiary)}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-light));display:flex;align-items:center;justify-content:center;color:white;font-size:0.75rem;font-weight:700}
+.user-points{font-size:0.7rem;font-weight:600;color:var(--accent)}
+.content-area{flex:1;display:flex;overflow:hidden}
+.panel{width:500px;background:var(--bg-secondary);border-right:1px solid var(--border);overflow-y:auto;padding:20px}
+.panel::-webkit-scrollbar{width:5px}
+.panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.map-wrapper{flex:1;position:relative}
+#map{width:100%;height:100%}
+.card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;transition:var(--transition)}
+.card:hover{box-shadow:var(--shadow-md)}
+.card-title{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:0.95rem;font-weight:600}
+.card-title .icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85rem}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:0.72rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.3px}
+.form-label .req{color:var(--danger)}
+.form-input,.form-select{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.85rem;background:var(--bg-primary);color:var(--text-primary);transition:var(--transition);font-family:inherit}
+.form-input:focus,.form-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.form-input::placeholder{color:var(--text-muted)}
+textarea.form-input{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.selection-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.selection-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.selection-card{padding:12px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);text-align:center;cursor:pointer;transition:var(--transition);font-size:0.75rem;font-weight:500;background:var(--bg-primary)}
+.selection-card:hover{border-color:var(--accent)}
+.selection-card.selected{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.sel-icon{font-size:1.2rem;margin-bottom:4px}
+.sel-label{font-weight:600}
+.sel-desc{font-size:0.65rem;color:var(--text-muted);margin-top:2px}
+.upload-area{border:2px dashed var(--border);border-radius:var(--radius-md);padding:24px;text-align:center;cursor:pointer;transition:var(--transition);background:var(--bg-primary)}
+.upload-area:hover{border-color:var(--accent);background:var(--accent-bg)}
+.upload-area i{font-size:1.5rem;color:var(--accent);margin-bottom:8px}
+.upload-area p{font-size:0.8rem;color:var(--text-secondary)}
+.upload-area small{font-size:0.65rem;color:var(--text-muted)}
+.preview-container{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.preview-thumb{position:relative;width:80px;height:80px}
+.preview-thumb img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm);border:2px solid var(--border)}
+.preview-thumb .remove-photo{position:absolute;top:-6px;right:-6px;width:20px;height:20px;background:var(--danger);color:white;border:none;border-radius:50%;cursor:pointer;font-size:0.65rem;display:flex;align-items:center;justify-content:center}
+.btn{padding:11px 20px;border:none;border-radius:var(--radius-sm);font-size:0.85rem;font-weight:600;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+.btn-full{width:100%}
+.btn-accent{background:var(--accent);color:white}
+.btn-accent:hover{background:var(--accent-light);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,106,78,0.3)}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text-secondary)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+.btn-danger{background:var(--danger);color:white}
+.btn-danger:hover{background:#d32f2f}
+.btn-success{background:var(--success);color:white}
+.btn-success:hover{background:#2d9348}
+.btn-sm{padding:6px 12px;font-size:0.75rem}
+.report-item{padding:14px;border-radius:var(--radius-md);background:var(--bg-primary);border:1px solid var(--border);margin-bottom:10px;cursor:pointer;transition:var(--transition)}
+.report-item:hover{border-color:var(--accent);transform:translateX(3px);box-shadow:var(--shadow-sm)}
+.report-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px}
+.report-title{font-size:0.85rem;font-weight:600;flex:1}
+.report-id{font-size:0.65rem;color:var(--text-muted);font-family:monospace}
+.report-meta{font-size:0.7rem;color:var(--text-muted);display:flex;align-items:center;gap:4px;margin-top:4px}
+.report-time{font-size:0.65rem;color:var(--text-muted);margin-top:6px}
+.report-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.status-pill{font-size:0.6rem;padding:3px 8px;border-radius:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap}
+.status-new{background:rgba(234,67,53,0.1);color:var(--danger)}
+.status-review{background:rgba(66,133,244,0.1);color:var(--info)}
+.status-progress{background:rgba(251,188,4,0.15);color:#b8860b}
+.status-resolved{background:rgba(52,168,83,0.1);color:var(--success)}
+.empty-state{text-align:center;padding:40px 20px}
+.empty-state i{font-size:2.5rem;color:var(--text-muted);margin-bottom:12px}
+.empty-state h4{font-size:0.95rem;color:var(--text-secondary);margin-bottom:6px}
+.empty-state p{font-size:0.8rem;color:var(--text-muted)}
+.stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.stat-box{padding:14px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius-md);text-align:center}
+.stat-value{font-size:1.5rem;font-weight:700;color:var(--accent)}
+.stat-label{font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;margin-top:2px}
+.map-floating{position:absolute;top:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px}
+.map-fab{width:40px;height:40px;border-radius:var(--radius-sm);background:var(--bg-secondary);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);transition:var(--transition);box-shadow:var(--shadow-sm)}
+.map-fab:hover{background:var(--accent);color:white;border-color:var(--accent)}
+.map-fab.active{background:var(--accent);color:white;border-color:var(--accent)}
+.map-legend{position:absolute;bottom:30px;left:16px;z-index:999;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px;box-shadow:var(--shadow-md)}
+.legend-title{font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px}
+.legend-items{display:flex;flex-direction:column;gap:6px}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:0.75rem;color:var(--text-secondary)}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:14px 20px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;font-size:0.85rem;animation:slideIn 0.3s ease;min-width:280px}
+.toast.success{border-left:4px solid var(--success)}
+.toast.error{border-left:4px solid var(--danger)}
+.toast.info{border-left:4px solid var(--info)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.show{display:flex}
+.modal-box{background:var(--bg-secondary);border-radius:var(--radius-xl);padding:28px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;animation:modalPop 0.25s ease}
+@keyframes modalPop{from{transform:scale(0.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.modal-head h2{font-size:1.1rem}
+.modal-close-btn{width:30px;height:30px;border-radius:8px;border:none;background:var(--bg-tertiary);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);transition:var(--transition)}
+.modal-close-btn:hover{background:var(--danger);color:white}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.info-banner{background:var(--accent-bg);border:1px solid rgba(0,106,78,0.2);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
+.info-banner i{color:var(--accent);margin-top:2px}
+.info-banner p{font-size:0.8rem;color:var(--text-secondary);line-height:1.5}
+.emergency-list{display:flex;flex-direction:column;gap:8px}
+.emergency-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.em-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem}
+.em-info{flex:1}
+.em-name{font-size:0.8rem;font-weight:600}
+.em-number{font-size:0.7rem;color:var(--text-muted)}
+.em-call{padding:6px 12px;background:var(--success);color:white;border:none;border-radius:6px;font-size:0.7rem;font-weight:600;cursor:pointer;text-decoration:none}
+.tip-card{background:linear-gradient(135deg,var(--accent),var(--accent-light));color:white;border-radius:var(--radius-lg);padding:20px;margin-bottom:16px}
+.tip-card h4{font-size:0.85rem;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.tip-card p{font-size:0.75rem;opacity:0.9;line-height:1.5}
+.progress-track{height:6px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;margin-top:6px}
+.progress-bar-fill{height:100%;border-radius:3px;transition:width 0.6s ease}
+.search-wrap{position:relative;margin-bottom:16px}
+.search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.85rem;background:var(--bg-primary);color:var(--text-primary);transition:var(--transition)}
+.search-wrap input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.search-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.85rem}
+.filter-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.chip{padding:5px 12px;border-radius:20px;font-size:0.7rem;font-weight:500;border:1.5px solid var(--border);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;transition:var(--transition)}
+.chip:hover,.chip.active{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.verify-btn,.resolve-btn{padding:4px 10px;border-radius:6px;font-size:0.65rem;font-weight:600;border:1px solid;cursor:pointer;transition:var(--transition);background:transparent}
+.verify-btn{border-color:var(--info);color:var(--info)}
+.verify-btn:hover{background:var(--info);color:white}
+.resolve-btn{border-color:var(--success);color:var(--success)}
+.resolve-btn:hover{background:var(--success);color:white}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-head h3{font-size:0.85rem;font-weight:600}
+.section-head a{font-size:0.7rem;color:var(--accent);text-decoration:none;cursor:pointer}
+.notif-panel{position:absolute;top:50px;right:16px;width:340px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);z-index:1000;display:none;padding:16px;max-height:500px;overflow-y:auto}
+.notif-panel.show{display:block}
+.notif-panel h4{font-size:0.85rem;margin-bottom:12px}
+.notif-item{padding:10px;border-radius:var(--radius-sm);background:var(--bg-primary);margin-bottom:8px;font-size:0.75rem;color:var(--text-secondary);border-left:3px solid var(--accent)}
+.notif-item strong{color:var(--text-primary);display:block;margin-bottom:4px}
+.fade-in{animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.detail-item{padding:12px;background:var(--bg-primary);border-radius:var(--radius-sm);border:1px solid var(--border)}
+.detail-label{font-size:0.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;letter-spacing:0.3px}
+.detail-value{font-size:0.85rem;color:var(--text-primary);font-weight:500}
+.photo-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px}
+.photo-gallery img{width:100%;height:100px;object-fit:cover;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);border:1px solid var(--border)}
+.photo-gallery img:hover{transform:scale(1.03)}
+.comment-section{margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
+.comment-input{display:flex;gap:8px;margin-bottom:12px}
+.comment-input input{flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.85rem;background:var(--bg-primary);color:var(--text-primary);font-family:inherit}
+.comment-input input:focus{outline:none;border-color:var(--accent)}
+.comment-item{padding:10px;background:var(--bg-primary);border-radius:var(--radius-sm);margin-bottom:8px;border:1px solid var(--border)}
+.comment-author{font-size:0.75rem;font-weight:600;color:var(--accent)}
+.comment-text{font-size:0.85rem;color:var(--text-primary);margin-top:4px}
+.comment-time{font-size:0.65rem;color:var(--text-muted);margin-top:4px}
+.status-timeline{display:flex;align-items:center;justify-content:space-between;margin:20px 0;position:relative}
+.status-timeline::before{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:var(--border);z-index:0}
+.timeline-step{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+.timeline-dot{width:28px;height:28px;border-radius:50%;background:var(--bg-secondary);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-muted)}
+.timeline-step.completed .timeline-dot{background:var(--success);border-color:var(--success);color:white}
+.timeline-step.current .timeline-dot{background:var(--info);border-color:var(--info);color:white;animation:pulse 2s infinite}
+.timeline-label{font-size:0.65rem;color:var(--text-muted);font-weight:500;text-align:center}
+.timeline-step.completed .timeline-label,.timeline-step.current .timeline-label{color:var(--text-primary);font-weight:600}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(66,133,244,0.5)}50%{box-shadow:0 0 0 8px rgba(66,133,244,0)}}
+.leaderboard-item{display:flex;align-items:center;padding:10px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px}
+.leaderboard-rank{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;margin-right:10px;background:var(--bg-tertiary);color:var(--text-secondary)}
+.rank-1{background:linear-gradient(135deg,#ffd700,#ffb800);color:#5a4000}
+.rank-2{background:linear-gradient(135deg,#c0c0c0,#a0a0a0);color:#333}
+.rank-3{background:linear-gradient(135deg,#cd7f32,#b8722d);color:white}
+.leaderboard-info{flex:1}
+.leaderboard-name{font-size:0.85rem;font-weight:600}
+.leaderboard-detail{font-size:0.7rem;color:var(--text-muted)}
+.leaderboard-score{font-size:1rem;font-weight:700;color:var(--accent)}
+.weather-widget{background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:var(--radius-md);padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+[data-theme="dark"] .weather-widget{background:linear-gradient(135deg,#1a3a5c,#0d253f)}
+.weather-icon{font-size:2rem}
+.weather-info h4{font-size:0.85rem;color:#1565c0}
+[data-theme="dark"] .weather-info h4{color:#64b5f6}
+.weather-info p{font-size:0.7rem;color:#42a5f5}
+[data-theme="dark"] .weather-info p{color:#90caf9}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.badge-inline{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.65rem;font-weight:600}
+.priority-high{background:rgba(234,67,53,0.1);color:var(--danger)}
+.priority-medium{background:rgba(251,188,4,0.15);color:#b8860b}
+.priority-low{background:rgba(52,168,83,0.1);color:var(--success)}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.profile-stat{text-align:center;padding:16px;background:var(--bg-primary);border-radius:var(--radius-md);border:1px solid var(--border)}
+.profile-stat-value{font-size:1.8rem;font-weight:700;color:var(--accent)}
+.profile-stat-label{font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;margin-top:4px}
+.achievement-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:20px;font-size:0.75rem;font-weight:600;color:var(--accent);margin-right:8px;margin-bottom:8px}
+.leaflet-popup-content-wrapper{border-radius:12px!important;box-shadow:var(--shadow-lg)!important}
+[data-theme="dark"] .leaflet-popup-content-wrapper{background:var(--bg-secondary)!important;color:var(--text-primary)!important}
+[data-theme="dark"] .leaflet-popup-tip{background:var(--bg-secondary)!important}
+.custom-popup h4{font-size:0.9rem;margin-bottom:6px;color:var(--accent)}
+.custom-popup p{font-size:0.75rem;color:var(--text-secondary);margin-bottom:3px}
+@media(max-width:1024px){.panel{width:380px}}
+@media(max-width:768px){
+.auth-container{flex-direction:column;width:95%;min-height:auto;max-height:95vh}
+.auth-left{padding:32px 24px;min-height:auto}
+.auth-hero h1{font-size:1.3rem}
+.auth-right{padding:32px 24px}
+.auth-features{display:none}
+.sidebar{display:none}.panel{width:100%;max-height:45vh}.content-area{flex-direction:column}.map-wrapper{height:55vh}.detail-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.profile-stats{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== AUTH GATE ===== -->
+<div class="auth-gate" id="authGate">
+<div class="auth-bg-shapes">
+<div class="shape"></div><div class="shape"></div><div class="shape"></div><div class="shape"></div>
+</div>
+<div class="auth-container">
+<div class="auth-left">
+<div class="auth-brand">
+<div class="auth-brand-icon"><i class="fas fa-leaf"></i></div>
+<div>
+<h2>CleanBD</h2>
+<span>Environmental Reporter</span>
+</div>
+</div>
+<div class="auth-hero">
+<h1>Empowering Citizens for a Cleaner, Safer Bangladesh</h1>
+<p>Report waterlogging, dengue breeding sites, and illegal garbage dumps. Help your community stay informed and drive change.</p>
+<div class="auth-features">
+<div class="auth-feature">
+<div class="auth-feature-icon"><i class="fas fa-water"></i></div>
+<span>Real-time waterlogging reports across Dhaka</span>
+</div>
+<div class="auth-feature">
+<div class="auth-feature-icon"><i class="fas fa-shield-alt"></i></div>
+<span>Dengue breeding site tracking & alerts</span>
+</div>
+<div class="auth-feature">
+<div class="auth-feature-icon"><i class="fas fa-map-marked-alt"></i></div>
+<span>Interactive map with community data</span>
+</div>
+<div class="auth-feature">
+<div class="auth-feature-icon"><i class="fas fa-trophy"></i></div>
+<span>Earn reputation & climb the leaderboard</span>
+</div>
+</div>
+</div>
+<div class="auth-footer-brand">© 2024 CleanBD — Community-Powered Environmental Reporting</div>
+</div>
+<div class="auth-right">
+<div class="auth-tabs">
+<button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+<button class="auth-tab" onclick="switchAuthTab('register')">Create Account</button>
+</div>
+
+<!-- LOGIN FORM -->
+<div class="auth-form active" id="authLoginForm">
+<h3>Welcome Back 👋</h3>
+<p class="auth-subtitle">Sign in to continue to CleanBD</p>
+<div class="auth-error" id="loginError"><i class="fas fa-exclamation-circle"></i><span></span></div>
+<div class="auth-input-group">
+<label>Email or Username</label>
+<div class="auth-input-wrap">
+<i class="fas fa-user"></i>
+<input type="text" class="auth-input" id="authLoginEmail" placeholder="Enter your email or username" autocomplete="username">
+</div>
+</div>
+<div class="auth-input-group">
+<label>Password</label>
+<div class="auth-input-wrap">
+<i class="fas fa-lock"></i>
+<input type="password" class="auth-input" id="authLoginPassword" placeholder="Enter your password" autocomplete="current-password">
+<button class="password-toggle" onclick="togglePasswordVisibility('authLoginPassword',this)"><i class="fas fa-eye"></i></button>
+</div>
+</div>
+<div class="auth-remember">
+<label><input type="checkbox" id="rememberMe" checked> Remember me</label>
+<a onclick="showForgotPassword()">Forgot password?</a>
+</div>
+<button class="auth-submit" onclick="handleAuthLogin()">
+<i class="fas fa-sign-in-alt"></i> Sign In
+</button>
+<div class="auth-divider">or continue with</div>
+<div class="auth-social">
+<button class="auth-social-btn" onclick="socialLogin('google')"><i class="fab fa-google" style="color:#ea4335"></i> Google</button>
+<button class="auth-social-btn" onclick="socialLogin('github')"><i class="fab fa-github" style="color:#333"></i> GitHub</button>
+</div>
+<div class="auth-switch">Don't have an account? <a onclick="switchAuthTab('register')">Sign up free</a></div>
+<div class="auth-guest"><button onclick="handleGuestAccess()">Continue as Guest (Limited Access)</button></div>
+</div>
+
+<!-- REGISTER FORM -->
+<div class="auth-form" id="authRegisterForm">
+<h3>Join CleanBD 🌿</h3>
+<p class="auth-subtitle">Create your account and start making a difference</p>
+<div class="auth-error" id="registerError"><i class="fas fa-exclamation-circle"></i><span></span></div>
+<div class="auth-success" id="registerSuccess"><i class="fas fa-check-circle"></i><span></span></div>
+<div class="auth-input-group">
+<label>Full Name</label>
+<div class="auth-input-wrap">
+<i class="fas fa-user"></i>
+<input type="text" class="auth-input" id="authRegName" placeholder="Enter your full name">
+</div>
+</div>
+<div class="auth-input-group">
+<label>Email Address</label>
+<div class="auth-input-wrap">
+<i class="fas fa-envelope"></i>
+<input type="email" class="auth-input" id="authRegEmail" placeholder="your@email.com">
+</div>
+</div>
+<div class="auth-input-group">
+<label>Username</label>
+<div class="auth-input-wrap">
+<i class="fas fa-at"></i>
+<input type="text" class="auth-input" id="authRegUsername" placeholder="Choose a unique username">
+</div>
+</div>
+<div class="auth-input-group">
+<label>Password</label>
+<div class="auth-input-wrap">
+<i class="fas fa-lock"></i>
+<input type="password" class="auth-input" id="authRegPassword" placeholder="Create a strong password (min 6 chars)">
+<button class="password-toggle" onclick="togglePasswordVisibility('authRegPassword',this)"><i class="fas fa-eye"></i></button>
+</div>
+</div>
+<div class="auth-input-group">
+<label>School / Institution (Optional)</label>
+<div class="auth-input-wrap">
+<i class="fas fa-school"></i>
+<input type="text" class="auth-input" id="authRegSchool" placeholder="e.g., Notre Dame College, DU">
+</div>
+</div>
+<div style="margin-bottom:12px">
+<label style="display:flex;align-items:flex-start;gap:8px;font-size:0.78rem;color:var(--text-secondary);cursor:pointer">
+<input type="checkbox" id="authAgreeTerms" style="margin-top:2px">
+I agree to the <a style="color:var(--accent);font-weight:600;cursor:pointer">Terms of Service</a> and <a style="color:var(--accent);font-weight:600;cursor:pointer">Privacy Policy</a>
+</label>
+</div>
+<button class="auth-submit" onclick="handleAuthRegister()">
+<i class="fas fa-user-plus"></i> Create Account
+</button>
+<div class="auth-switch" style="margin-top:16px">Already have an account? <a onclick="switchAuthTab('login')">Sign in</a></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div class="app-layout" id="appLayout">
+<aside class="sidebar">
+<div class="sidebar-header">
+<div class="logo">
+<div class="logo-icon"><i class="fas fa-leaf"></i></div>
+<div class="logo-text">
+<h1>CleanBD</h1>
+<span>Environmental Reporter</span>
+</div>
+</div>
+</div>
+<nav class="nav-section">
+<div class="nav-label">Report Issues</div>
+<button class="nav-item active" data-view="waterlogging" onclick="switchView('waterlogging')">
+<i class="fas fa-water"></i> Waterlogging
+<span class="nav-badge" id="waterBadge" style="display:none">0</span>
+</button>
+<button class="nav-item" data-view="dengue" onclick="switchView('dengue')">
+<i class="fas fa-mosquito"></i> DengueWatch
+<span class="nav-badge" id="dengueBadge" style="display:none">0</span>
+</button>
+<button class="nav-item" data-view="garbage" onclick="switchView('garbage')">
+<i class="fas fa-trash-alt"></i> Garbage Spotter
+<span class="nav-badge" id="garbageBadge" style="display:none">0</span>
+</button>
+<div class="nav-label">Explore</div>
+<button class="nav-item" data-view="dashboard" onclick="switchView('dashboard')">
+<i class="fas fa-chart-bar"></i> Dashboard
+</button>
+<button class="nav-item" data-view="map-view" onclick="switchView('map-view')">
+<i class="fas fa-map-marked-alt"></i> Full Map
+</button>
+<button class="nav-item" data-view="routes" onclick="switchView('routes')">
+<i class="fas fa-route"></i> Safe Routes
+</button>
+<button class="nav-item" data-view="history" onclick="switchView('history')">
+<i class="fas fa-history"></i> My Reports
+</button>
+<button class="nav-item" data-view="leaderboard" onclick="switchView('leaderboard')">
+<i class="fas fa-trophy"></i> Leaderboard
+</button>
+<button class="nav-item" data-view="profile" onclick="switchView('profile')">
+<i class="fas fa-user"></i> My Profile
+</button>
+<div class="nav-label">Resources</div>
+<button class="nav-item" data-view="education" onclick="switchView('education')">
+<i class="fas fa-graduation-cap"></i> Learn & Tips
+</button>
+<button class="nav-item" data-view="emergency" onclick="switchView('emergency')">
+<i class="fas fa-phone-alt"></i> Emergency
+</button>
+<button class="nav-item" data-view="about" onclick="switchView('about')">
+<i class="fas fa-info-circle"></i> About CleanBD
+</button>
+</nav>
+<div class="sidebar-footer">
+<button class="theme-toggle" onclick="toggleTheme()">
+<span><i class="fas fa-moon"></i> Dark Mode</span>
+<div class="toggle-switch"></div>
+</button>
+</div>
+</aside>
+<div class="main-content">
+<div class="top-bar">
+<div class="top-bar-left">
+<div>
+<div class="page-title" id="pageTitle">Waterlogging Reporter</div>
+<div class="page-subtitle" id="pageSubtitle">Report flooded roads and waterlogged areas in Dhaka</div>
+</div>
+</div>
+<div class="top-bar-right">
+<button class="top-btn" onclick="toggleNotifications()" title="Notifications">
+<i class="fas fa-bell"></i>
+<span class="notif-dot" id="notifDot" style="display:none"></span>
+</button>
+<button class="top-btn" onclick="exportData()" title="Export Data">
+<i class="fas fa-download"></i>
+</button>
+<button class="user-profile-btn" onclick="switchView('profile')" id="userProfileBtn">
+<div class="user-avatar" id="userAvatar">U</div>
+<div>
+<div style="font-size:0.75rem;font-weight:600" id="userName">User</div>
+<div class="user-points" id="userPoints">0 pts</div>
+</div>
+</button>
+<button class="sos-btn" onclick="showEmergency()">
+<i class="fas fa-exclamation-triangle"></i> SOS
+</button>
+</div>
+</div>
+<div class="content-area">
+<div class="panel" id="panel">
+<!-- WATERLOGGING -->
+<div class="tab-panel active" id="view-waterlogging">
+<div class="weather-widget">
+<div class="weather-icon">🌧️</div>
+<div class="weather-info">
+<h4>Monsoon Alert — Dhaka</h4>
+<p>Heavy rainfall expected • Humidity 89% • 32°C</p>
+</div>
+</div>
+<div class="info-banner">
+<i class="fas fa-info-circle"></i>
+<p>Click anywhere on the map to select a location, or choose from the dropdown. Detailed reports help authorities respond faster and keep fellow citizens informed.</p>
+</div>
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-plus"></i></div>
+Submit Waterlogging Report
+</div>
+<div class="form-group">
+<label class="form-label">Area / Location <span class="req">*</span></label>
+<select class="form-select" id="wlLocation">
+<option value="">Choose area or click map...</option>
+<option value="23.7597,90.3746">Farmgate (Bijoy Sarani)</option>
+<option value="23.8042,90.3683">Mirpur 10</option>
+<option value="23.8130,90.3650">Mirpur 11</option>
+<option value="23.7465,90.3762">Dhanmondi 27</option>
+<option value="23.7720,90.3930">Mohakhali</option>
+<option value="23.7925,90.4072">Gulshan 1</option>
+<option value="23.7935,90.4010">Banani 11</option>
+<option value="23.8740,90.3980">Uttara Sector 3</option>
+<option value="23.8630,90.3890">Uttara Sector 7</option>
+<option value="23.7330,90.4178">Motijheel</option>
+<option value="23.7105,90.3995">Old Dhaka (Nawabpur)</option>
+<option value="23.7655,90.3520">Mohammadpur</option>
+<option value="23.7610,90.3860">Tejgaon</option>
+<option value="23.7200,90.4250">Jatrabari</option>
+<option value="23.7340,90.4200">Sayedabad</option>
+<option value="23.7610,90.4130">Rampura</option>
+<option value="23.7806,90.4220">Badda</option>
+<option value="23.8060,90.4250">Kuril</option>
+<option value="23.8140,90.4340">Bashundhara R/A</option>
+<option value="custom">📍 Custom (click map)</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">Street / Road Name <span class="req">*</span></label>
+<input type="text" class="form-input" id="wlStreet" placeholder="e.g., Bijoy Sarani, Mirpur Road">
+</div>
+<div class="form-group">
+<label class="form-label">Water Depth <span class="req">*</span></label>
+<div class="selection-grid">
+<div class="selection-card" onclick="selectOption('wlDepth','ankle',this)"><div class="sel-icon">🟢</div><div class="sel-label">Ankle</div><div class="sel-desc">Below 1 ft</div></div>
+<div class="selection-card" onclick="selectOption('wlDepth','knee',this)"><div class="sel-icon">🟡</div><div class="sel-label">Knee</div><div class="sel-desc">1-2 ft</div></div>
+<div class="selection-card" onclick="selectOption('wlDepth','waist',this)"><div class="sel-icon">🟠</div><div class="sel-label">Waist</div><div class="sel-desc">2-3 ft</div></div>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label">Water Condition</label>
+<div class="selection-grid-4">
+<div class="selection-card" onclick="selectOption('wlCondition','clear',this)"><div class="sel-icon">💧</div><div class="sel-label">Clear</div></div>
+<div class="selection-card" onclick="selectOption('wlCondition','muddy',this)"><div class="sel-icon">🟤</div><div class="sel-label">Muddy</div></div>
+<div class="selection-card" onclick="selectOption('wlCondition','dirty',this)"><div class="sel-icon">🟫</div><div class="sel-label">Dirty</div></div>
+<div class="selection-card" onclick="selectOption('wlCondition','sewage',this)"><div class="sel-icon">⚠️</div><div class="sel-label">Sewage</div></div>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label">Affected Area Type <span class="req">*</span></label>
+<select class="form-select" id="wlAreaType">
+<option value="">Select type...</option>
+<option value="main_road">Main Road</option>
+<option value="inner_road">Inner / Residential Road</option>
+<option value="intersection">Intersection / Crossing</option>
+<option value="underpass">Underpass</option>
+<option value="bridge">Bridge / Flyover Approach</option>
+<option value="school_path">School / College Path</option>
+<option value="market">Market Area</option>
+<option value="residential">Residential Area</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">Traffic Impact</label>
+<div class="selection-grid">
+<div class="selection-card" onclick="selectOption('wlTraffic','none',this)"><div class="sel-icon">🚶</div><div class="sel-label">Pedestrians Only</div></div>
+<div class="selection-card" onclick="selectOption('wlTraffic','partial',this)"><div class="sel-icon">🚗</div><div class="sel-label">Partial Block</div></div>
+<div class="selection-card" onclick="selectOption('wlTraffic','full',this)"><div class="sel-icon">🚫</div><div class="sel-label">Fully Blocked</div></div>
+</div>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label class="form-label">Duration of Flooding</label>
+<select class="form-select" id="wlDuration">
+<option value="">Select...</option>
+<option value="just_started">Just started</option>
+<option value="1-2_hours">1-2 hours</option>
+<option value="3-6_hours">3-6 hours</option>
+<option value="6-12_hours">6-12 hours</option>
+<option value="1_day">Over 1 day</option>
+<option value="multiple_days">Multiple days</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">Priority Level</label>
+<select class="form-select" id="wlPriority">
+<option value="low">Low</option>
+<option value="medium" selected>Medium</option>
+<option value="high">High — Urgent</option>
+</select>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label">Nearby Landmark</label>
+<input type="text" class="form-input" id="wlLandmark" placeholder="e.g., Near Kakrail Mosque">
+</div>
+<div class="form-group">
+<label class="form-label">Photos (up to 3)</label>
+<div class="upload-area" onclick="document.getElementById('wlPhoto').click()"><i class="fas fa-cloud-upload-alt"></i><p>Click to upload photos</p><small>JPG, PNG • Max 5MB each</small></div>
+<input type="file" id="wlPhoto" accept="image/*" multiple style="display:none" onchange="handlePhotos(this,'wlPreviewContainer',3,'wl')">
+<div class="preview-container" id="wlPreviewContainer"></div>
+</div>
+<div class="form-group">
+<label class="form-label">Detailed Description <span class="req">*</span></label>
+<textarea class="form-input" id="wlNotes" placeholder="Describe the situation in detail..."></textarea>
+</div>
+<button class="btn btn-accent btn-full" onclick="submitReport('waterlogging')"><i class="fas fa-paper-plane"></i> Submit Report</button>
+</div>
+<div class="section-head"><h3>Recent Reports</h3><a onclick="switchView('history')">View all</a></div>
+<div class="filter-row">
+<span class="chip active" onclick="filterReports('waterlogging','all',this)">All</span>
+<span class="chip" onclick="filterReports('waterlogging','new',this)">New</span>
+<span class="chip" onclick="filterReports('waterlogging','review',this)">Under Review</span>
+<span class="chip" onclick="filterReports('waterlogging','progress',this)">In Progress</span>
+<span class="chip" onclick="filterReports('waterlogging','resolved',this)">Resolved</span>
+</div>
+<div id="wlReportsList"></div>
+</div>
+
+<!-- DENGUE -->
+<div class="tab-panel" id="view-dengue">
+<div class="tip-card" style="background:linear-gradient(135deg,#ea4335,#c62828)">
+<h4><i class="fas fa-shield-alt"></i> Dengue Prevention</h4>
+<p>Eliminate standing water around your home. Cover water containers. Clean drains weekly. Report breeding sites to help your community stay safe.</p>
+</div>
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(234,67,53,0.1);color:var(--danger)"><i class="fas fa-plus"></i></div>
+Report Dengue Breeding Site
+</div>
+<div class="form-group">
+<label class="form-label">Hazard Type <span class="req">*</span></label>
+<select class="form-select" id="dgType">
+<option value="">Select hazard type...</option>
+<option value="standing_water">Stagnant / Standing Water</option>
+<option value="open_container">Open Water Container</option>
+<option value="blocked_drain">Blocked / Clogged Drain</option>
+<option value="garbage_water">Garbage with Water</option>
+<option value="mosquito_heavy">Mosquito-Heavy Area</option>
+<option value="construction_water">Construction Site Water</option>
+<option value="tire_water">Used Tire Collecting Water</option>
+<option value="coconut_shell">Coconut Shells / Plant Pots</option>
+<option value="refrigerator_tray">Fridge AC Water Tray</option>
+<option value="roof_water">Roof / Balcony Water Pool</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">Area / Location <span class="req">*</span></label>
+<select class="form-select" id="dgLocation">
+<option value="">Choose area or click map...</option>
+<option value="23.8042,90.3683">Mirpur 10</option>
+<option value="23.8130,90.3650">Mirpur 11</option>
+<option value="23.8740,90.3980">Uttara</option>
+<option value="23.7925,90.4072">Gulshan</option>
+<option value="23.7935,90.4010">Banani</option>
+<option value="23.7655,90.3520">Mohammadpur</option>
+<option value="23.7465,90.3762">Dhanmondi</option>
+<option value="23.7105,90.3995">Old Dhaka</option>
+<option value="23.7330,90.4178">Motijheel</option>
+<option value="23.7610,90.4130">Rampura</option>
+<option value="23.7806,90.4220">Badda</option>
+<option value="23.7620,90.4280">Khilgaon</option>
+<option value="custom">📍 Custom (click map)</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">Specific Address <span class="req">*</span></label>
+<input type="text" class="form-input" id="dgAddress" placeholder="e.g., House 12, Road 5">
+</div>
+<div class="form-group">
+<label class="form-label">Risk Level <span class="req">*</span></label>
+<div class="selection-grid">
+<div class="selection-card" onclick="selectOption('dgRisk','low',this)"><div class="sel-icon">🟢</div><div class="sel-label">Low</div><div class="sel-desc">Few mosquitoes</div></div>
+<div class="selection-card" onclick="selectOption('dgRisk','moderate',this)"><div class="sel-icon">🟡</div><div class="sel-label">Moderate</div><div class="sel-desc">Noticeable</div></div>
+<div class="selection-card" onclick="selectOption('dgRisk','high',this)"><div class="sel-icon">🔴</div><div class="sel-label">High</div><div class="sel-desc">Many mosquitoes</div></div>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label">Photos (up to 3)</label>
+<div class="upload-area" onclick="document.getElementById('dgPhoto').click()"><i class="fas fa-cloud-upload-alt"></i><p>Click to upload photos</p><small>JPG, PNG • Max 5MB each</small></div>
+<input type="file" id="dgPhoto" accept="image/*" multiple style="display:none" onchange="handlePhotos(this,'dgPreviewContainer',3,'dg')">
+<div class="preview-container" id="dgPreviewContainer"></div>
+</div>
+<div class="form-group">
+<label class="form-label">Detailed Description <span class="req">*</span></label>
+<textarea class="form-input" id="dgNotes" placeholder="Describe the breeding site..."></textarea>
+</div>
+<button class="btn btn-danger btn-full" onclick="submitReport('dengue')"><i class="fas fa-exclamation-circle"></i> Submit Report</button>
+</div>
+<div class="section-head"><h3>Recent Reports</h3><a onclick="switchView('history')">View all</a></div>
+<div class="filter-row">
+<span class="chip active" onclick="filterReports('dengue','all',this)">All</span>
+<span class="chip" onclick="filterReports('dengue','new',this)">New</span>
+<span class="chip" onclick="filterReports('dengue','review',this)">Under Review</span>
+<span class="chip" onclick="filterReports('dengue','progress',this)">In Progress</span>
+<span class="chip" onclick="filterReports('dengue','resolved',this)">Resolved</span>
+</div>
+<div id="dgReportsList"></div>
+</div>
+
+<!-- GARBAGE -->
+<div class="tab-panel" id="view-garbage">
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(251,188,4,0.15);color:#b8860b"><i class="fas fa-plus"></i></div>
+Report Illegal Garbage Dump
+</div>
+<div class="form-group">
+<label class="form-label">Area / Location <span class="req">*</span></label>
+<select class="form-select" id="gbLocation">
+<option value="">Choose area or click map...</option>
+<option value="23.8042,90.3683">Mirpur 10</option>
+<option value="23.7597,90.3746">Farmgate</option>
+<option value="23.7720,90.3930">Mohakhali</option>
+<option value="23.7465,90.3762">Dhanmondi</option>
+<option value="23.7655,90.3520">Mohammadpur</option>
+<option value="23.7105,90.3995">Old Dhaka</option>
+<option value="23.7330,90.4178">Motijheel</option>
+<option value="23.7610,90.4130">Rampura</option>
+<option value="custom">📍 Custom (click map)</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">Exact Spot Description <span class="req">*</span></label>
+<input type="text" class="form-input" id="gbSpot" placeholder="e.g., Corner of Road 5 and Road 6">
+</div>
+<div class="form-group">
+<label class="form-label">Waste Type <span class="req">*</span></label>
+<select class="form-select" id="gbType">
+<option value="">Select waste type...</option>
+<option value="household">Household / Domestic Waste</option>
+<option value="plastic">Plastic Waste</option>
+<option value="construction">Construction Debris</option>
+<option value="medical">Medical / Clinical Waste</option>
+<option value="industrial">Industrial Waste</option>
+<option value="organic">Organic / Food Waste</option>
+<option value="mixed">Mixed Waste</option>
+<option value="hazardous">Hazardous / Chemical Waste</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">Estimated Amount <span class="req">*</span></label>
+<div class="selection-grid">
+<div class="selection-card" onclick="selectOption('gbAmount','small',this)"><div class="sel-icon">🗑️</div><div class="sel-label">Small</div><div class="sel-desc">Few bags</div></div>
+<div class="selection-card" onclick="selectOption('gbAmount','medium',this)"><div class="sel-icon">📦</div><div class="sel-label">Medium</div><div class="sel-desc">Cart-load</div></div>
+<div class="selection-card" onclick="selectOption('gbAmount','large',this)"><div class="sel-icon">🏔️</div><div class="sel-label">Large</div><div class="sel-desc">Truck-load</div></div>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label">Photos (up to 3)</label>
+<div class="upload-area" onclick="document.getElementById('gbPhoto').click()"><i class="fas fa-cloud-upload-alt"></i><p>Click to upload photos</p><small>JPG, PNG • Max 5MB each</small></div>
+<input type="file" id="gbPhoto" accept="image/*" multiple style="display:none" onchange="handlePhotos(this,'gbPreviewContainer',3,'gb')">
+<div class="preview-container" id="gbPreviewContainer"></div>
+</div>
+<div class="form-group">
+<label class="form-label">Detailed Description <span class="req">*</span></label>
+<textarea class="form-input" id="gbNotes" placeholder="Describe the dump..."></textarea>
+</div>
+<button class="btn btn-accent btn-full" style="background:#b8860b" onclick="submitReport('garbage')"><i class="fas fa-paper-plane"></i> Submit Report</button>
+</div>
+<div class="section-head"><h3>Recent Reports</h3><a onclick="switchView('history')">View all</a></div>
+<div class="filter-row">
+<span class="chip active" onclick="filterReports('garbage','all',this)">All</span>
+<span class="chip" onclick="filterReports('garbage','new',this)">New</span>
+<span class="chip" onclick="filterReports('garbage','review',this)">Under Review</span>
+<span class="chip" onclick="filterReports('garbage','progress',this)">In Progress</span>
+<span class="chip" onclick="filterReports('garbage','resolved',this)">Resolved</span>
+</div>
+<div id="gbReportsList"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="tab-panel" id="view-dashboard">
+<div class="stats-row">
+<div class="stat-box"><div class="stat-value" id="dashTotal">0</div><div class="stat-label">Total Reports</div></div>
+<div class="stat-box"><div class="stat-value" id="dashResolved" style="color:var(--success)">0</div><div class="stat-label">Resolved</div></div>
+<div class="stat-box"><div class="stat-value" id="dashPending" style="color:var(--warning)">0</div><div class="stat-label">In Progress</div></div>
+<div class="stat-box"><div class="stat-value" id="dashNew" style="color:var(--danger)">0</div><div class="stat-label">New</div></div>
+</div>
+<div class="card"><div class="card-title"><div class="icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-chart-pie"></i></div>By Category</div><div id="categoryBreakdown"></div></div>
+<div class="card"><div class="card-title"><div class="icon" style="background:rgba(52,168,83,0.1);color:var(--success)"><i class="fas fa-map-marker-alt"></i></div>Most Affected Areas</div><div id="areaBreakdown"></div></div>
+<div class="card"><div class="card-title"><div class="icon" style="background:rgba(251,188,4,0.15);color:#b8860b"><i class="fas fa-leaf"></i></div>Community Impact</div>
+<div style="display:flex;flex-direction:column;gap:8px;font-size:0.85rem">
+<div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm)"><span>✅ Issues Resolved</span><strong id="impactResolved">0</strong></div>
+<div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm)"><span>👥 Total Verifications</span><strong id="impactVerifications">0</strong></div>
+<div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm)"><span>💬 Comments</span><strong id="impactComments">0</strong></div>
+<div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm)"><span>📸 Photos</span><strong id="impactPhotos">0</strong></div>
+</div></div>
+</div>
+
+<!-- MAP VIEW -->
+<div class="tab-panel" id="view-map-view">
+<div class="card"><div class="card-title"><div class="icon" style="background:var(--accent-bg);color:var(--accent)"><i class="fas fa-layer-group"></i></div>Map Layers</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<label style="display:flex;align-items:center;gap:10px;font-size:0.85rem;cursor:pointer"><input type="checkbox" checked onchange="toggleMapLayer('water',this.checked)"> 🌊 Waterlogging</label>
+<label style="display:flex;align-items:center;gap:10px;font-size:0.85rem;cursor:pointer"><input type="checkbox" checked onchange="toggleMapLayer('dengue',this.checked)"> 🦟 Dengue Hazards</label>
+<label style="display:flex;align-items:center;gap:10px;font-size:0.85rem;cursor:pointer"><input type="checkbox" checked onchange="toggleMapLayer('garbage',this.checked)"> 🗑️ Garbage Dumps</label>
+</div></div>
+<div class="card"><div class="card-title"><div class="icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-search-location"></i></div>Search Area</div>
+<div class="search-wrap"><i class="fas fa-search"></i><input type="text" placeholder="Search location in Dhaka..." id="mapSearch" onkeypress="if(event.key==='Enter')searchLocation()"></div>
+<button class="btn btn-outline btn-full" onclick="searchLocation()"><i class="fas fa-search"></i> Search</button></div>
+</div>
+
+<!-- ROUTES -->
+<div class="tab-panel" id="view-routes">
+<div class="info-banner"><i class="fas fa-route"></i><p>Find safe routes based on current waterlogging reports.</p></div>
+<div class="card"><div class="card-title"><div class="icon" style="background:rgba(52,168,83,0.1);color:var(--success)"><i class="fas fa-search"></i></div>Find Safe Route</div>
+<div class="form-group"><label class="form-label">From</label><select class="form-select" id="routeFrom"><option value="">Select starting point...</option><option value="23.8740,90.3980">Uttara</option><option value="23.8042,90.3683">Mirpur</option><option value="23.7597,90.3746">Farmgate</option><option value="23.7465,90.3762">Dhanmondi</option><option value="23.7925,90.4072">Gulshan</option><option value="23.7330,90.4178">Motijheel</option></select></div>
+<div class="form-group"><label class="form-label">To</label><select class="form-select" id="routeTo"><option value="">Select destination...</option><option value="23.8740,90.3980">Uttara</option><option value="23.8042,90.3683">Mirpur</option><option value="23.7597,90.3746">Farmgate</option><option value="23.7465,90.3762">Dhanmondi</option><option value="23.7925,90.4072">Gulshan</option><option value="23.7330,90.4178">Motijheel</option></select></div>
+<button class="btn btn-accent btn-full" onclick="findSafeRoute()"><i class="fas fa-route"></i> Find Safe Route</button></div>
+<div id="routeResults"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="tab-panel" id="view-history">
+<div class="card"><div class="card-title"><div class="icon" style="background:var(--accent-bg);color:var(--accent)"><i class="fas fa-history"></i></div>My Submitted Reports</div></div>
+<div class="filter-row">
+<span class="chip active" onclick="filterMyReports('all',this)">All</span>
+<span class="chip" onclick="filterMyReports('waterlogging',this)">Waterlogging</span>
+<span class="chip" onclick="filterMyReports('dengue',this)">Dengue</span>
+<span class="chip" onclick="filterMyReports('garbage',this)">Garbage</span>
+</div>
+<div id="myReportsList"></div>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="tab-panel" id="view-leaderboard">
+<div class="tip-card"><h4><i class="fas fa-trophy"></i> Community Leaderboard</h4><p>Top contributors making Dhaka cleaner and safer.</p></div>
+<div class="card"><div class="card-title"><div class="icon" style="background:rgba(251,188,4,0.15);color:#b8860b"><i class="fas fa-medal"></i></div>Top Contributors</div><div id="userLeaderboard"></div></div>
+<div class="card"><div class="card-title"><div class="icon" style="background:rgba(52,168,83,0.1);color:var(--success)"><i class="fas fa-school"></i></div>School Leaderboard</div><div id="schoolLeaderboard"></div></div>
+</div>
+
+<!-- PROFILE -->
+<div class="tab-panel" id="view-profile">
+<div class="card">
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-light));display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;font-weight:700" id="profileAvatar">U</div>
+<div style="flex:1">
+<h2 style="font-size:1.3rem;margin-bottom:4px" id="profileName">User Name</h2>
+<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px" id="profileEmail">user@example.com</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap" id="profileBadges"></div>
+</div>
+</div>
+<div class="profile-stats">
+<div class="profile-stat"><div class="profile-stat-value" id="profileReports">0</div><div class="profile-stat-label">Reports</div></div>
+<div class="profile-stat"><div class="profile-stat-value" id="profileVerifications">0</div><div class="profile-stat-label">Verifications</div></div>
+<div class="profile-stat"><div class="profile-stat-value" id="profilePoints">0</div><div class="profile-stat-label">Points</div></div>
+</div>
+<div style="display:flex;gap:8px">
+<button class="btn btn-outline" onclick="showEditProfileModal()" style="flex:1"><i class="fas fa-edit"></i> Edit Profile</button>
+<button class="btn btn-danger" onclick="logout()" style="flex:1"><i class="fas fa-sign-out-alt"></i> Logout</button>
+</div>
+</div>
+<div class="card"><div class="card-title"><div class="icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-history"></i></div>My Activity Log</div><div id="activityLog"></div></div>
+</div>
+
+<!-- EDUCATION -->
+<div class="tab-panel" id="view-education">
+<div class="tip-card" style="background:linear-gradient(135deg,#4285f4,#1a73e8)"><h4><i class="fas fa-water"></i> About Waterlogging in Dhaka</h4><p>Dhaka experiences severe waterlogging during monsoon (June–October). Reporting helps authorities prioritize areas.</p></div>
+<div class="card"><div class="card-title"><div class="icon" style="background:rgba(234,67,53,0.1);color:var(--danger)"><i class="fas fa-mosquito"></i></div>Dengue Prevention Tips</div>
+<ul style="font-size:0.8rem;color:var(--text-secondary);list-style:none;display:flex;flex-direction:column;gap:8px">
+<li>✅ Remove standing water from containers weekly</li><li>✅ Cover water storage tanks and drums</li><li>✅ Clear blocked drains near your home</li><li>✅ Use mosquito nets and repellents</li><li>✅ Report breeding sites using this app</li>
+</ul></div>
+<div class="card"><div class="card-title"><div class="icon" style="background:rgba(251,188,4,0.15);color:#b8860b"><i class="fas fa-recycle"></i></div>Waste Management</div>
+<ul style="font-size:0.8rem;color:var(--text-secondary);list-style:none;display:flex;flex-direction:column;gap:8px">
+<li>✅ Separate wet and dry waste at home</li><li>✅ Never dump garbage in drains or canals</li><li>✅ Report illegal dumping spots</li><li>✅ Recycle plastic, paper, and glass</li>
+</ul></div>
+</div>
+
+<!-- EMERGENCY -->
+<div class="tab-panel" id="view-emergency">
+<div class="card" style="border-color:var(--danger);background:rgba(234,67,53,0.03)">
+<div class="card-title"><div class="icon" style="background:rgba(234,67,53,0.1);color:var(--danger)"><i class="fas fa-phone-alt"></i></div>Emergency Contacts</div>
+<div class="emergency-list">
+<div class="emergency-item"><div class="em-icon" style="background:rgba(234,67,53,0.1);color:var(--danger)"><i class="fas fa-ambulance"></i></div><div class="em-info"><div class="em-name">National Emergency Helpline</div><div class="em-number">999 (Free • 24/7)</div></div><a href="tel:999" class="em-call">Call</a></div>
+<div class="emergency-item"><div class="em-icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-fire-extinguisher"></i></div><div class="em-info"><div class="em-name">Fire Service</div><div class="em-number">199</div></div><a href="tel:199" class="em-call">Call</a></div>
+<div class="emergency-item"><div class="em-icon" style="background:rgba(251,188,4,0.15);color:#b8860b"><i class="fas fa-hospital"></i></div><div class="em-info"><div class="em-name">DGHS Dengue Helpline</div><div class="em-number">10655</div></div><a href="tel:10655" class="em-call">Call</a></div>
+<div class="emergency-item"><div class="em-icon" style="background:rgba(156,39,176,0.1);color:#9c27b0"><i class="fas fa-city"></i></div><div class="em-info"><div class="em-name">DNCC</div><div class="em-number">09611-000011</div></div><a href="tel:09611000011" class="em-call">Call</a></div>
+<div class="emergency-item"><div class="em-icon" style="background:rgba(0,106,78,0.1);color:var(--accent)"><i class="fas fa-city"></i></div><div class="em-info"><div class="em-name">DSCC</div><div class="em-number">09611-000022</div></div><a href="tel:09611000022" class="em-call">Call</a></div>
+</div></div>
+</div>
+
+<!-- ABOUT -->
+<div class="tab-panel" id="view-about">
+<div class="card"><div class="card-title"><div class="icon" style="background:var(--accent-bg);color:var(--accent)"><i class="fas fa-leaf"></i></div>About CleanBD</div>
+<p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.7;margin-bottom:12px">CleanBD is a community-powered environmental reporting platform for Dhaka, Bangladesh. Empower people to report environmental hazards so communities stay informed.</p>
+<p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.7">All reports are stored locally in your browser. No personal data is collected externally.</p></div>
+<div class="card"><div class="card-title"><div class="icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-database"></i></div>Your Data</div>
+<div style="display:flex;gap:8px"><button class="btn btn-outline" onclick="exportData()" style="flex:1"><i class="fas fa-download"></i> Export</button><button class="btn btn-outline" onclick="clearAllData()" style="flex:1;border-color:var(--danger);color:var(--danger)"><i class="fas fa-trash"></i> Clear All</button></div></div>
+</div>
+</div>
+
+<!-- MAP -->
+<div class="map-wrapper">
+<div id="map"></div>
+<div class="map-floating">
+<button class="map-fab" onclick="locateMe()" title="My Location"><i class="fas fa-crosshairs"></i></button>
+<button class="map-fab" onclick="resetMapView()" title="Reset View"><i class="fas fa-expand"></i></button>
+<button class="map-fab active" id="layerWaterBtn" onclick="toggleMapLayer('water')" title="Waterlogging"><i class="fas fa-water"></i></button>
+<button class="map-fab active" id="layerDengueBtn" onclick="toggleMapLayer('dengue')" title="Dengue"><i class="fas fa-bug"></i></button>
+<button class="map-fab active" id="layerGarbageBtn" onclick="toggleMapLayer('garbage')" title="Garbage"><i class="fas fa-trash"></i></button>
+</div>
+<div class="map-legend">
+<div class="legend-title">Map Legend</div>
+<div class="legend-items">
+<div class="legend-item"><div class="legend-dot" style="background:#4285f4"></div> Waterlogging</div>
+<div class="legend-item"><div class="legend-dot" style="background:#ea4335"></div> Dengue Hazard</div>
+<div class="legend-item"><div class="legend-dot" style="background:#fbbc04"></div> Garbage Dump</div>
+<div class="legend-item"><div class="legend-dot" style="background:#34a853"></div> Resolved</div>
+</div>
+</div>
+<div class="notif-panel" id="notifPanel">
+<h4>Notifications</h4>
+<div id="notifList"><div class="empty-state" style="padding:20px"><p>No notifications yet</p></div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Detail Modal -->
+<div class="modal-backdrop" id="detailModal">
+<div class="modal-box">
+<div class="modal-head"><h2 id="detailTitle">Report Details</h2><button class="modal-close-btn" onclick="closeModal('detailModal')"><i class="fas fa-times"></i></button></div>
+<div id="detailContent"></div>
+</div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal-backdrop" id="editProfileModal">
+<div class="modal-box" style="max-width:500px">
+<div class="modal-head"><h2>Edit Profile</h2><button class="modal-close-btn" onclick="closeModal('editProfileModal')"><i class="fas fa-times"></i></button></div>
+<div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="editUsername" readonly style="background:var(--bg-tertiary)"></div>
+<div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="editEmail" readonly style="background:var(--bg-tertiary)"></div>
+<div class="form-group"><label class="form-label">School/Institution</label><input type="text" class="form-input" id="editSchool" placeholder="e.g., Notre Dame College"></div>
+<button class="btn btn-accent btn-full" onclick="saveProfile()"><i class="fas fa-save"></i> Save Changes</button>
+</div>
+</div>
+
+<!-- SOS Modal -->
+<div class="modal-backdrop" id="sosModal">
+<div class="modal-box" style="max-width:500px">
+<div class="modal-head"><h2>🚨 Emergency SOS</h2><button class="modal-close-btn" onclick="closeModal('sosModal')"><i class="fas fa-times"></i></button></div>
+<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px">If you're in immediate danger, call:</p>
+<div style="text-align:center;margin-bottom:20px">
+<a href="tel:999" style="display:inline-block;padding:16px 40px;background:var(--danger);color:white;border-radius:12px;font-size:1.5rem;font-weight:700;text-decoration:none"><i class="fas fa-phone-alt"></i> 999</a>
+<p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px">National Emergency Helpline (Free • 24/7)</p>
+</div>
+<div class="emergency-list">
+<div class="emergency-item"><div class="em-icon" style="background:rgba(234,67,53,0.1);color:var(--danger)"><i class="fas fa-ambulance"></i></div><div class="em-info"><div class="em-name">Ambulance</div><div class="em-number">199</div></div><a href="tel:199" class="em-call">Call</a></div>
+<div class="emergency-item"><div class="em-icon" style="background:rgba(251,188,4,0.15);color:#b8860b"><i class="fas fa-hospital"></i></div><div class="em-info"><div class="em-name">Dengue Helpline</div><div class="em-number">10655</div></div><a href="tel:10655" class="em-call">Call</a></div>
+</div>
+</div>
+</div>
+
+<script>
+// ============ STATE ============
+let reports = JSON.parse(localStorage.getItem('cleanbd_reports') || '[]');
+let users = JSON.parse(localStorage.getItem('cleanbd_users') || '[]');
+let currentUser = JSON.parse(localStorage.getItem('cleanbd_currentUser') || 'null');
+let selections = {};
+let customLatLng = null;
+let tempMarker = null;
+let photoData = { wl: [], dg: [], gb: [] };
+let currentFilters = { waterlogging: 'all', dengue: 'all', garbage: 'all', my: 'all' };
+let notifications = JSON.parse(localStorage.getItem('cleanbd_notifs') || '[]');
+let isGuest = false;
+
+// ============ AUTH GATE ============
+function checkAuth() {
+    if (currentUser) {
+        enterApp();
+    } else {
+        document.getElementById('authGate').classList.remove('hidden');
+        document.getElementById('appLayout').classList.remove('visible');
+    }
+}
+
+function switchAuthTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    if (tab === 'login') {
+        document.querySelectorAll('.auth-tab')[0].classList.add('active');
+        document.getElementById('authLoginForm').classList.add('active');
+    } else {
+        document.querySelectorAll('.auth-tab')[1].classList.add('active');
+        document.getElementById('authRegisterForm').classList.add('active');
+    }
+    hideAuthErrors();
+}
+
+function hideAuthErrors() {
+    document.getElementById('loginError').classList.remove('show');
+    document.getElementById('registerError').classList.remove('show');
+    document.getElementById('registerSuccess').classList.remove('show');
+}
+
+function showAuthError(id, msg) {
+    const el = document.getElementById(id);
+    el.querySelector('span').textContent = msg;
+    el.classList.add('show');
+}
+
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+function handleAuthLogin() {
+    hideAuthErrors();
+    const identifier = document.getElementById('authLoginEmail').value.trim();
+    const password = document.getElementById('authLoginPassword').value;
+    if (!identifier || !password) return showAuthError('loginError', 'Please fill in all fields');
+    const user = users.find(u => (u.username === identifier || u.email === identifier) && u.password === password);
+    if (!user) return showAuthError('loginError', 'Invalid credentials. Please check your email/username and password.');
+    currentUser = user;
+    localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser));
+    isGuest = false;
+    enterApp();
+    showToast(`Welcome back, ${user.username}!`, 'success');
+}
+
+function handleAuthRegister() {
+    hideAuthErrors();
+    const name = document.getElementById('authRegName').value.trim();
+    const email = document.getElementById('authRegEmail').value.trim();
+    const username = document.getElementById('authRegUsername').value.trim();
+    const password = document.getElementById('authRegPassword').value;
+    const school = document.getElementById('authRegSchool').value.trim();
+    const agreed = document.getElementById('authAgreeTerms').checked;
+
+    if (!name || !email || !username || !password) return showAuthError('registerError', 'Please fill in all required fields');
+    if (password.length < 6) return showAuthError('registerError', 'Password must be at least 6 characters');
+    if (!email.includes('@') || !email.includes('.')) return showAuthError('registerError', 'Please enter a valid email address');
+    if (!agreed) return showAuthError('registerError', 'Please agree to the Terms of Service');
+    if (users.find(u => u.username === username)) return showAuthError('registerError', 'Username already taken');
+    if (users.find(u => u.email === email)) return showAuthError('registerError', 'Email already registered');
+
+    const newUser = {
+        id: Date.now(),
+        fullName: name,
+        username,
+        email,
+        password,
+        schoolName: school || null,
+        reputationPoints: 0,
+        profilePhotoURL: null,
+        createdAt: new Date().toISOString()
+    };
+    users.push(newUser);
+    localStorage.setItem('cleanbd_users', JSON.stringify(users));
+    currentUser = newUser;
+    localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser));
+    isGuest = false;
+    enterApp();
+    showToast(`Welcome to CleanBD, ${name}! 🌿`, 'success');
+}
+
+function socialLogin(provider) {
+    hideAuthErrors();
+    showAuthError('loginError', `${provider.charAt(0).toUpperCase()+provider.slice(1)} login is not available in demo mode. Please register with email.`);
+}
+
+function showForgotPassword() {
+    hideAuthErrors();
+    showAuthError('loginError', 'Password reset is not available in demo mode. Please register a new account.');
+}
+
+function handleGuestAccess() {
+    isGuest = true;
+    currentUser = {
+        id: 'guest_' + Date.now(),
+        fullName: 'Guest User',
+        username: 'Guest',
+        email: 'guest@cleanbd.local',
+        schoolName: null,
+        reputationPoints: 0,
+        isGuest: true
+    };
+    enterApp();
+    showToast('You have limited access as a guest. Register for full features.', 'info');
+}
+
+function enterApp() {
+    document.getElementById('authGate').classList.add('hidden');
+    setTimeout(() => {
+        document.getElementById('appLayout').classList.add('visible');
+        setTimeout(() => { map.invalidateSize(); }, 300);
+    }, 400);
+    updateUserUI();
+    renderAllMarkers();
+    refreshReportLists();
+    updateBadges();
+    renderNotifications();
+}
+
+function logout() {
+    currentUser = null;
+    isGuest = false;
+    localStorage.removeItem('cleanbd_currentUser');
+    document.getElementById('appLayout').classList.remove('visible');
+    setTimeout(() => {
+        document.getElementById('authGate').classList.remove('hidden');
+        // Clear auth form fields
+        document.getElementById('authLoginEmail').value = '';
+        document.getElementById('authLoginPassword').value = '';
+        hideAuthErrors();
+    }, 100);
+    showToast('Logged out successfully', 'info');
+}
+
+// ============ MAP INIT ============
+const map = L.map('map', { zoomControl: false }).setView([23.8103, 90.4125], 12);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+L.control.scale({ imperial: false }).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap | CleanBD', maxZoom: 19
+}).addTo(map);
+const layers = {
+    water: L.layerGroup().addTo(map),
+    dengue: L.layerGroup().addTo(map),
+    garbage: L.layerGroup().addTo(map)
+};
+
+function makeIcon(color, emoji) {
+    return L.divIcon({
+        html: `<div style="background:${color};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid white">${emoji}</div>`,
+        className: '', iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -18]
+    });
+}
+const icons = {
+    water: makeIcon('#4285f4', '🌊'),
+    dengue: makeIcon('#ea4335', '🦟'),
+    garbage: makeIcon('#fbbc04', '🗑️'),
+    resolved: makeIcon('#34a853', '✅')
+};
+
+map.on('click', function(e) {
+    customLatLng = e.latlng;
+    if (tempMarker) map.removeLayer(tempMarker);
+    tempMarker = L.marker(e.latlng, { icon: makeIcon('#9c27b0', '📍') }).addTo(map)
+        .bindPopup(`<div class="custom-popup"><h4>📍 Selected Location</h4><p>Lat: ${e.latlng.lat.toFixed(5)}, Lng: ${e.latlng.lng.toFixed(5)}</p></div>`).openPopup();
+});
+
+// ============ USER UI ============
+function updateUserUI() {
+    const profileBtn = document.getElementById('userProfileBtn');
+    if (currentUser) {
+        profileBtn.style.display = 'flex';
+        document.getElementById('userName').textContent = currentUser.username;
+        document.getElementById('userPoints').textContent = currentUser.reputationPoints + ' pts';
+        document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+    }
+}
+
+function showEditProfileModal() {
+    if (!currentUser) return;
+    document.getElementById('editUsername').value = currentUser.username;
+    document.getElementById('editEmail').value = currentUser.email;
+    document.getElementById('editSchool').value = currentUser.schoolName || '';
+    document.getElementById('editProfileModal').classList.add('show');
+}
+
+function saveProfile() {
+    const school = document.getElementById('editSchool').value.trim();
+    currentUser.schoolName = school || null;
+    const userIndex = users.findIndex(u => u.id === currentUser.id);
+    if (userIndex !== -1) {
+        users[userIndex] = currentUser;
+        localStorage.setItem('cleanbd_users', JSON.stringify(users));
+        localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser));
+    }
+    closeModal('editProfileModal');
+    updateProfileView();
+    showToast('Profile updated successfully', 'success');
+}
+
+// ============ NAVIGATION ============
+function switchView(view) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const navBtn = document.querySelector(`[data-view="${view}"]`);
+    if (navBtn) navBtn.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById(`view-${view}`);
+    if (panel) panel.classList.add('active');
+    const titles = {
+        'waterlogging': ['Waterlogging Reporter', 'Report flooded roads and waterlogged areas'],
+        'dengue': ['DengueWatch BD', 'Report mosquito breeding sites and hazards'],
+        'garbage': ['Garbage Spotter', 'Report illegal dumping and waste accumulation'],
+        'dashboard': ['Dashboard', 'Overview of all community reports'],
+        'map-view': ['Full Map View', 'Explore all reports on the map'],
+        'routes': ['Safe Routes', 'Find safe paths based on current conditions'],
+        'history': ['My Reports', 'Track your submitted reports'],
+        'leaderboard': ['Leaderboard', 'Top contributors and schools'],
+        'profile': ['My Profile', 'View and edit your profile'],
+        'education': ['Learn & Tips', 'Prevention tips and educational resources'],
+        'emergency': ['Emergency Contacts', 'Important numbers for emergencies'],
+        'about': ['About CleanBD', 'Learn about this platform']
+    };
+    if (titles[view]) {
+        document.getElementById('pageTitle').textContent = titles[view][0];
+        document.getElementById('pageSubtitle').textContent = titles[view][1];
+    }
+    if (view === 'dashboard') updateDashboard();
+    if (view === 'history') renderMyReports();
+    if (view === 'leaderboard') updateLeaderboard();
+    if (view === 'profile') updateProfileView();
+}
+
+// ============ SELECTIONS ============
+function selectOption(group, value, el) {
+    el.parentElement.querySelectorAll('.selection-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selections[group] = value;
+}
+
+// ============ PHOTO HANDLING ============
+function handlePhotos(input, containerId, maxCount, type) {
+    const container = document.getElementById(containerId);
+    const key = type || containerId.split('Preview')[0];
+    if (input.files) {
+        Array.from(input.files).forEach((file) => {
+            if (photoData[key].length >= maxCount) { showToast(`Maximum ${maxCount} photos allowed`, 'error'); return; }
+            if (file.size > 5 * 1024 * 1024) { showToast('File too large. Max 5MB.', 'error'); return; }
+            const reader = new FileReader();
+            reader.onload = function(e) { photoData[key].push(e.target.result); renderPhotoPreview(key, containerId); };
+            reader.readAsDataURL(file);
+        });
+    }
+}
+function renderPhotoPreview(key, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = photoData[key].map((src, idx) => `
+        <div class="preview-thumb"><img src="${src}" alt="Preview"><button class="remove-photo" onclick="removePhoto('${key}',${idx},'${containerId}')"><i class="fas fa-times"></i></button></div>
+    `).join('');
+}
+function removePhoto(key, idx, containerId) { photoData[key].splice(idx, 1); renderPhotoPreview(key, containerId); }
+
+// ============ SUBMIT REPORT ============
+function submitReport(type) {
+    if (!currentUser) { showToast('Please login to submit a report', 'error'); return; }
+    if (currentUser.isGuest) { showToast('Guest users cannot submit reports. Please register.', 'error'); return; }
+
+    const reportId = 'CB-' + String(Date.now()).slice(-6);
+    let report = {
+        id: Date.now(), reportId, type, timestamp: new Date().toISOString(), status: 'new',
+        reporterId: currentUser.id, reporterName: currentUser.username,
+        verifications: 0, verifiedBy: [], comments: [], photos: [],
+        history: [{ status: 'new', timestamp: new Date().toISOString(), note: 'Report submitted' }]
+    };
+
+    if (type === 'waterlogging') {
+        const loc = document.getElementById('wlLocation').value;
+        const street = document.getElementById('wlStreet').value.trim();
+        const notes = document.getElementById('wlNotes').value.trim();
+        if (!loc) return showToast('Please select a location', 'error');
+        if (!street) return showToast('Please enter street name', 'error');
+        if (!selections.wlDepth) return showToast('Please select water depth', 'error');
+        if (!document.getElementById('wlAreaType').value) return showToast('Please select area type', 'error');
+        if (!notes) return showToast('Please add a description', 'error');
+        if (loc === 'custom') { if (!customLatLng) return showToast('Click on map to select location', 'error'); report.lat = customLatLng.lat; report.lng = customLatLng.lng; report.locationName = 'Custom Location'; }
+        else { const [lat, lng] = loc.split(',').map(Number); report.lat = lat; report.lng = lng; report.locationName = document.getElementById('wlLocation').options[document.getElementById('wlLocation').selectedIndex].text; }
+        report.street = street; report.depth = selections.wlDepth; report.condition = selections.wlCondition || 'unknown';
+        report.areaType = document.getElementById('wlAreaType').value; report.traffic = selections.wlTraffic || 'unknown';
+        report.duration = document.getElementById('wlDuration').value; report.priority = document.getElementById('wlPriority').value;
+        report.landmark = document.getElementById('wlLandmark').value; report.notes = notes; report.photos = photoData.wl.slice();
+    } else if (type === 'dengue') {
+        const loc = document.getElementById('dgLocation').value;
+        const hazardType = document.getElementById('dgType').value;
+        const address = document.getElementById('dgAddress').value.trim();
+        const notes = document.getElementById('dgNotes').value.trim();
+        if (!hazardType) return showToast('Please select hazard type', 'error');
+        if (!loc) return showToast('Please select a location', 'error');
+        if (!address) return showToast('Please enter specific address', 'error');
+        if (!selections.dgRisk) return showToast('Please select risk level', 'error');
+        if (!notes) return showToast('Please add a description', 'error');
+        if (loc === 'custom') { if (!customLatLng) return showToast('Click on map to select location', 'error'); report.lat = customLatLng.lat; report.lng = customLatLng.lng; report.locationName = 'Custom Location'; }
+        else { const [lat, lng] = loc.split(',').map(Number); report.lat = lat; report.lng = lng; report.locationName = document.getElementById('dgLocation').options[document.getElementById('dgLocation').selectedIndex].text; }
+        report.hazardType = hazardType; report.address = address; report.size = selections.dgSize || 'unknown';
+        report.risk = selections.dgRisk; report.priority = 'medium'; report.notes = notes; report.photos = photoData.dg.slice();
+    } else if (type === 'garbage') {
+        const loc = document.getElementById('gbLocation').value;
+        const spot = document.getElementById('gbSpot').value.trim();
+        const wasteType = document.getElementById('gbType').value;
+        const notes = document.getElementById('gbNotes').value.trim();
+        if (!loc) return showToast('Please select a location', 'error');
+        if (!spot) return showToast('Please describe the exact spot', 'error');
+        if (!wasteType) return showToast('Please select waste type', 'error');
+        if (!selections.gbAmount) return showToast('Please select amount', 'error');
+        if (!notes) return showToast('Please add a description', 'error');
+        if (loc === 'custom') { if (!customLatLng) return showToast('Click on map to select location', 'error'); report.lat = customLatLng.lat; report.lng = customLatLng.lng; report.locationName = 'Custom Location'; }
+        else { const [lat, lng] = loc.split(',').map(Number); report.lat = lat; report.lng = lng; report.locationName = document.getElementById('gbLocation').options[document.getElementById('gbLocation').selectedIndex].text; }
+        report.spot = spot; report.wasteType = wasteType; report.amount = selections.gbAmount;
+        report.smell = selections.gbSmell || 'unknown'; report.priority = 'medium'; report.notes = notes; report.photos = photoData.gb.slice();
+    }
+
+    reports.unshift(report);
+    saveReports();
+    currentUser.reputationPoints += 10;
+    const userIndex = users.findIndex(u => u.id === currentUser.id);
+    if (userIndex !== -1) { users[userIndex] = currentUser; localStorage.setItem('cleanbd_users', JSON.stringify(users)); localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser)); }
+    addMarkerToMap(report); refreshReportLists(); updateBadges(); addNotification(report); updateUserUI();
+    showToast(`Report ${reportId} submitted! +10 points`, 'success');
+    resetForm(type);
+}
+
+function resetForm(type) {
+    if (type === 'waterlogging') {
+        ['wlLocation','wlStreet','wlAreaType','wlDuration','wlPriority','wlLandmark','wlNotes'].forEach(id => { const el = document.getElementById(id); if (el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = ''; });
+        document.getElementById('wlPreviewContainer').innerHTML = '';
+        document.querySelectorAll('#view-waterlogging .selection-card').forEach(c => c.classList.remove('selected'));
+        photoData.wl = []; ['wlDepth','wlCondition','wlTraffic'].forEach(k => delete selections[k]);
+    } else if (type === 'dengue') {
+        ['dgType','dgLocation','dgAddress','dgNotes'].forEach(id => { const el = document.getElementById(id); if (el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = ''; });
+        document.getElementById('dgPreviewContainer').innerHTML = '';
+        document.querySelectorAll('#view-dengue .selection-card').forEach(c => c.classList.remove('selected'));
+        photoData.dg = []; ['dgRisk','dgSize'].forEach(k => delete selections[k]);
+    } else if (type === 'garbage') {
+        ['gbLocation','gbSpot','gbType','gbNotes'].forEach(id => { const el = document.getElementById(id); if (el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = ''; });
+        document.getElementById('gbPreviewContainer').innerHTML = '';
+        document.querySelectorAll('#view-garbage .selection-card').forEach(c => c.classList.remove('selected'));
+        photoData.gb = []; ['gbAmount','gbSmell'].forEach(k => delete selections[k]);
+    }
+}
+
+// ============ MAP MARKERS ============
+function addMarkerToMap(report) {
+    const layerKey = report.type === 'waterlogging' ? 'water' : report.type === 'dengue' ? 'dengue' : 'garbage';
+    const icon = report.status === 'resolved' ? icons.resolved : icons[layerKey];
+    let popupHtml = `<div class="custom-popup"><h4>`;
+    if (report.type === 'waterlogging') popupHtml += `🌊 Waterlogging`;
+    else if (report.type === 'dengue') popupHtml += `🦟 Dengue Hazard`;
+    else popupHtml += `🗑️ Garbage Dump`;
+    popupHtml += `</h4><p><strong>ID:</strong> ${report.reportId}</p><p><strong>Location:</strong> ${report.locationName}</p><p><strong>Status:</strong> ${report.status}</p><p style="font-size:0.65rem;color:#999">${timeAgo(report.timestamp)}</p></div>`;
+    const marker = L.marker([report.lat, report.lng], { icon }).bindPopup(popupHtml).addTo(layers[layerKey]);
+    marker.reportId = report.id;
+    if (report.type === 'waterlogging') {
+        const radius = report.depth === 'waist' ? 200 : report.depth === 'knee' ? 120 : 60;
+        L.circle([report.lat, report.lng], { color: '#4285f4', fillColor: '#4285f4', fillOpacity: 0.1, weight: 1.5, radius }).addTo(layers.water);
+    } else if (report.type === 'dengue') {
+        const color = report.risk === 'high' ? '#ea4335' : report.risk === 'moderate' ? '#fbbc04' : '#34a853';
+        const radius = report.risk === 'high' ? 250 : report.risk === 'moderate' ? 150 : 80;
+        L.circle([report.lat, report.lng], { color, fillColor: color, fillOpacity: 0.08, weight: 1.5, radius }).addTo(layers.dengue);
+    }
+}
+function renderAllMarkers() { Object.values(layers).forEach(l => l.clearLayers()); reports.forEach(r => addMarkerToMap(r)); }
+
+// ============ REPORT LISTS ============
+function refreshReportLists() {
+    renderList('waterlogging', 'wlReportsList', currentFilters.waterlogging);
+    renderList('dengue', 'dgReportsList', currentFilters.dengue);
+    renderList('garbage', 'gbReportsList', currentFilters.garbage);
+}
+function filterReports(type, status, el) {
+    currentFilters[type] = status;
+    el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    renderList(type, type === 'waterlogging' ? 'wlReportsList' : type === 'dengue' ? 'dgReportsList' : 'gbReportsList', status);
+}
+function renderList(type, containerId, status) {
+    const container = document.getElementById(containerId);
+    let filtered = reports.filter(r => r.type === type);
+    if (status && status !== 'all') filtered = filtered.filter(r => r.status === status);
+    filtered = filtered.slice(0, 15);
+    if (filtered.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h4>No reports yet</h4><p>Be the first to report!</p></div>`; return; }
+    container.innerHTML = filtered.map(r => {
+        const emoji = type === 'waterlogging' ? '🌊' : type === 'dengue' ? '🦟' : '🗑️';
+        let detail = '';
+        if (type === 'waterlogging') detail = `Depth: ${r.depth} • ${r.street || ''}`;
+        else if (type === 'dengue') detail = `${r.hazardType.replace(/_/g,' ')} • Risk: ${r.risk}`;
+        else detail = `${r.wasteType} • ${r.amount}`;
+        return `<div class="report-item fade-in" onclick="showReportDetail(${r.id})"><div class="report-top"><div><div class="report-title">${emoji} ${r.locationName}</div><div class="report-id">${r.reportId} • ${r.reporterName}</div></div><span class="status-pill status-${r.status}">${r.status}</span></div><div class="report-meta"><i class="fas fa-info-circle"></i> ${detail}</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><div class="report-time">${timeAgo(r.timestamp)}</div><div style="display:flex;gap:4px"><span style="font-size:0.65rem;color:var(--text-muted)"><i class="fas fa-check-circle"></i> ${r.verifications}</span><span style="font-size:0.65rem;color:var(--text-muted);margin-left:6px"><i class="fas fa-comment"></i> ${r.comments.length}</span></div></div></div>`;
+    }).join('');
+}
+
+// ============ REPORT DETAIL ============
+function showReportDetail(id) {
+    const r = reports.find(x => x.id === id);
+    if (!r) return;
+    const emoji = r.type === 'waterlogging' ? '🌊' : r.type === 'dengue' ? '🦟' : '🗑️';
+    document.getElementById('detailTitle').innerHTML = `${emoji} Report ${r.reportId}`;
+    const statusOrder = ['new', 'review', 'progress', 'resolved'];
+    const currentIdx = statusOrder.indexOf(r.status);
+    let html = `<div class="status-timeline">${statusOrder.map((s, i) => `<div class="timeline-step ${i < currentIdx ? 'completed' : i === currentIdx ? 'current' : ''}"><div class="timeline-dot">${i < currentIdx ? '✓' : i+1}</div><div class="timeline-label">${s === 'new' ? 'New' : s === 'review' ? 'Review' : s === 'progress' ? 'In Progress' : 'Resolved'}</div></div>`).join('')}</div>`;
+    html += `<div class="detail-grid"><div class="detail-item"><div class="detail-label">Report ID</div><div class="detail-value" style="font-family:monospace">${r.reportId}</div></div><div class="detail-item"><div class="detail-label">Status</div><div class="detail-value"><span class="status-pill status-${r.status}">${r.status}</span></div></div><div class="detail-item"><div class="detail-label">Location</div><div class="detail-value">${r.locationName}</div></div><div class="detail-item"><div class="detail-label">Reported By</div><div class="detail-value">${r.reporterName}</div></div></div>`;
+    html += `<div class="detail-item" style="margin-bottom:16px"><div class="detail-label">Description</div><div class="detail-value" style="line-height:1.6">${r.notes}</div></div>`;
+    if (r.photos && r.photos.length) html += `<div style="margin-bottom:16px"><div class="detail-label">Photos (${r.photos.length})</div><div class="photo-gallery">${r.photos.map(p => `<img src="${p}" alt="Report photo">`).join('')}</div></div>`;
+    html += `<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">`;
+    html += `<button class="btn btn-sm btn-outline" onclick="verifyReport(${r.id})"><i class="fas fa-check"></i> Verify (${r.verifications})</button>`;
+    if (r.status !== 'resolved') html += `<button class="btn btn-sm btn-success" onclick="markResolved(${r.id})"><i class="fas fa-check-circle"></i> Mark Resolved</button>`;
+    html += `<button class="btn btn-sm btn-outline" onclick="focusMarker(${r.lat},${r.lng});closeModal('detailModal')"><i class="fas fa-map-marker-alt"></i> View on Map</button></div>`;
+    html += `<div class="comment-section"><h4 style="font-size:0.9rem;margin-bottom:12px"><i class="fas fa-comments"></i> Comments (${r.comments.length})</h4><div class="comment-input"><input type="text" id="commentInput_${r.id}" placeholder="Add a comment..."><button class="btn btn-sm btn-accent" onclick="addComment(${r.id})">Post</button></div>`;
+    html += r.comments.map(c => `<div class="comment-item"><div class="comment-author">${c.author}</div><div class="comment-text">${c.text}</div><div class="comment-time">${timeAgo(c.timestamp)}</div></div>`).join('') || '<p style="font-size:0.8rem;color:var(--text-muted)">No comments yet.</p>';
+    html += `</div>`;
+    document.getElementById('detailContent').innerHTML = html;
+    document.getElementById('detailModal').classList.add('show');
+}
+
+// ============ ACTIONS ============
+function verifyReport(id) {
+    if (!currentUser || currentUser.isGuest) { showToast('Please login to verify', 'error'); return; }
+    const r = reports.find(x => x.id === id);
+    if (!r) return;
+    if (r.verifiedBy.includes(currentUser.id)) { showToast('Already verified', 'info'); return; }
+    r.verifications++; r.verifiedBy.push(currentUser.id); currentUser.reputationPoints += 2;
+    const ui = users.findIndex(u => u.id === currentUser.id);
+    if (ui !== -1) { users[ui] = currentUser; localStorage.setItem('cleanbd_users', JSON.stringify(users)); localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser)); }
+    saveReports(); refreshReportLists(); showReportDetail(id); updateUserUI(); showToast('Verified! +2 points', 'success');
+}
+function markResolved(id) {
+    const r = reports.find(x => x.id === id);
+    if (!r) return;
+    r.status = 'resolved'; r.history.push({ status: 'resolved', timestamp: new Date().toISOString(), note: 'Marked as resolved' });
+    if (currentUser && r.reporterId === currentUser.id) { currentUser.reputationPoints += 5; const ui = users.findIndex(u => u.id === currentUser.id); if (ui !== -1) { users[ui] = currentUser; localStorage.setItem('cleanbd_users', JSON.stringify(users)); localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser)); updateUserUI(); } }
+    saveReports(); renderAllMarkers(); refreshReportLists(); showReportDetail(id); showToast('Marked as resolved!', 'success');
+}
+function addComment(id) {
+    if (!currentUser || currentUser.isGuest) { showToast('Please login to comment', 'error'); return; }
+    const input = document.getElementById(`commentInput_${id}`);
+    const text = input.value.trim();
+    if (!text) return;
+    const r = reports.find(x => x.id === id);
+    if (!r) return;
+    r.comments.push({ author: currentUser.username, text, timestamp: new Date().toISOString() });
+    currentUser.reputationPoints += 1;
+    const ui = users.findIndex(u => u.id === currentUser.id);
+    if (ui !== -1) { users[ui] = currentUser; localStorage.setItem('cleanbd_users', JSON.stringify(users)); localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser)); }
+    saveReports(); input.value = ''; showReportDetail(id); updateUserUI(); showToast('Comment added! +1 point', 'success');
+}
+function focusMarker(lat, lng) { map.setView([lat, lng], 16); }
+
+// ============ MY REPORTS ============
+function renderMyReports() {
+    const container = document.getElementById('myReportsList');
+    if (!currentUser || currentUser.isGuest) { container.innerHTML = `<div class="empty-state"><i class="fas fa-sign-in-alt"></i><h4>Login Required</h4><p>Please register to track your reports</p></div>`; return; }
+    let filtered = reports.filter(r => r.reporterId === currentUser.id);
+    if (currentFilters.my !== 'all') filtered = filtered.filter(r => r.type === currentFilters.my);
+    if (filtered.length === 0) { container.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h4>No reports yet</h4><p>Submit your first report!</p></div>`; return; }
+    container.innerHTML = filtered.map(r => {
+        const emoji = r.type === 'waterlogging' ? '🌊' : r.type === 'dengue' ? '🦟' : '🗑️';
+        return `<div class="report-item fade-in" onclick="showReportDetail(${r.id})"><div class="report-top"><div><div class="report-title">${emoji} ${r.locationName}</div><div class="report-id">${r.reportId}</div></div><span class="status-pill status-${r.status}">${r.status}</span></div><div class="report-time">${timeAgo(r.timestamp)}</div>${r.status !== 'resolved' ? `<div class="report-actions"><button class="resolve-btn" onclick="event.stopPropagation();markResolved(${r.id})"><i class="fas fa-check-circle"></i> Mark Resolved</button></div>` : ''}</div>`;
+    }).join('');
+}
+function filterMyReports(type, el) { currentFilters.my = type; el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); renderMyReports(); }
+
+// ============ MAP LAYERS ============
+function toggleMapLayer(layerKey, checked) {
+    if (checked === undefined) { if (map.hasLayer(layers[layerKey])) map.removeLayer(layers[layerKey]); else map.addLayer(layers[layerKey]); }
+    else { if (checked) map.addLayer(layers[layerKey]); else map.removeLayer(layers[layerKey]); }
+    updateLayerButtons();
+}
+function updateLayerButtons() {
+    document.getElementById('layerWaterBtn').classList.toggle('active', map.hasLayer(layers.water));
+    document.getElementById('layerDengueBtn').classList.toggle('active', map.hasLayer(layers.dengue));
+    document.getElementById('layerGarbageBtn').classList.toggle('active', map.hasLayer(layers.garbage));
+}
+
+// ============ DASHBOARD ============
+function updateDashboard() {
+    const total = reports.length;
+    const resolved = reports.filter(r => r.status === 'resolved').length;
+    const pending = reports.filter(r => r.status === 'progress' || r.status === 'review').length;
+    const newCount = reports.filter(r => r.status === 'new').length;
+    document.getElementById('dashTotal').textContent = total;
+    document.getElementById('dashResolved').textContent = resolved;
+    document.getElementById('dashPending').textContent = pending;
+    document.getElementById('dashNew').textContent = newCount;
+    const waterCount = reports.filter(r => r.type === 'waterlogging').length;
+    const dengueCount = reports.filter(r => r.type === 'dengue').length;
+    const garbageCount = reports.filter(r => r.type === 'garbage').length;
+    const catContainer = document.getElementById('categoryBreakdown');
+    if (total === 0) { catContainer.innerHTML = '<div class="empty-state" style="padding:20px"><p>Submit reports to see statistics</p></div>'; }
+    else { catContainer.innerHTML = `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px"><span>🌊 Waterlogging</span><span>${waterCount}</span></div><div class="progress-track"><div class="progress-bar-fill" style="width:${(waterCount/total*100)}%;background:#4285f4"></div></div></div><div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px"><span>🦟 Dengue</span><span>${dengueCount}</span></div><div class="progress-track"><div class="progress-bar-fill" style="width:${(dengueCount/total*100)}%;background:#ea4335"></div></div></div><div><div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px"><span>🗑️ Garbage</span><span>${garbageCount}</span></div><div class="progress-track"><div class="progress-bar-fill" style="width:${(garbageCount/total*100)}%;background:#fbbc04"></div></div></div>`; }
+    const areaContainer = document.getElementById('areaBreakdown');
+    if (total === 0) { areaContainer.innerHTML = '<div class="empty-state" style="padding:20px"><p>No data yet</p></div>'; }
+    else { const areaCounts = {}; reports.forEach(r => { areaCounts[r.locationName] = (areaCounts[r.locationName] || 0) + 1; }); const sorted = Object.entries(areaCounts).sort((a,b) => b[1]-a[1]).slice(0,8); const maxCount = sorted[0][1]; areaContainer.innerHTML = sorted.map(([name,count]) => `<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:3px"><span>${name}</span><span style="font-weight:600">${count}</span></div><div class="progress-track"><div class="progress-bar-fill" style="width:${(count/maxCount*100)}%;background:var(--accent)"></div></div></div>`).join(''); }
+    document.getElementById('impactResolved').textContent = resolved;
+    document.getElementById('impactVerifications').textContent = reports.reduce((s,r) => s + r.verifications, 0);
+    document.getElementById('impactComments').textContent = reports.reduce((s,r) => s + r.comments.length, 0);
+    document.getElementById('impactPhotos').textContent = reports.reduce((s,r) => s + (r.photos?.length || 0), 0);
+}
+
+// ============ LEADERBOARD ============
+function updateLeaderboard() {
+    const sortedUsers = [...users].sort((a,b) => b.reputationPoints - a.reputationPoints).slice(0, 10);
+    const userContainer = document.getElementById('userLeaderboard');
+    if (sortedUsers.length === 0) { userContainer.innerHTML = '<div class="empty-state" style="padding:20px"><p>No users yet</p></div>'; }
+    else { userContainer.innerHTML = sortedUsers.map((u, idx) => { const userReports = reports.filter(r => r.reporterId === u.id).length; const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : ''; return `<div class="leaderboard-item"><div class="leaderboard-rank ${rankClass}">${idx + 1}</div><div class="leaderboard-info"><div class="leaderboard-name">${u.username}</div><div class="leaderboard-detail">${userReports} reports</div></div><div class="leaderboard-score">${u.reputationPoints}</div></div>`; }).join(''); }
+    const schoolStats = {};
+    users.forEach(u => { if (u.schoolName) { if (!schoolStats[u.schoolName]) schoolStats[u.schoolName] = { reports: 0, points: 0 }; schoolStats[u.schoolName].reports += reports.filter(r => r.reporterId === u.id).length; schoolStats[u.schoolName].points += u.reputationPoints; } });
+    const sortedSchools = Object.entries(schoolStats).sort((a,b) => b[1].points - a[1].points).slice(0, 10);
+    const schoolContainer = document.getElementById('schoolLeaderboard');
+    if (sortedSchools.length === 0) { schoolContainer.innerHTML = '<div class="empty-state" style="padding:20px"><p>No schools registered yet</p></div>'; }
+    else { schoolContainer.innerHTML = sortedSchools.map(([name, stats], idx) => { const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : ''; return `<div class="leaderboard-item"><div class="leaderboard-rank ${rankClass}">${idx + 1}</div><div class="leaderboard-info"><div class="leaderboard-name">${name}</div><div class="leaderboard-detail">${stats.reports} reports</div></div><div class="leaderboard-score">${stats.points}</div></div>`; }).join(''); }
+}
+
+// ============ PROFILE ============
+function updateProfileView() {
+    if (!currentUser) return;
+    document.getElementById('profileName').textContent = currentUser.fullName || currentUser.username;
+    document.getElementById('profileEmail').textContent = currentUser.email;
+    document.getElementById('profileAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+    const myReports = reports.filter(r => r.reporterId === currentUser.id);
+    const myVerifications = reports.reduce((sum, r) => sum + (r.verifiedBy.includes(currentUser.id) ? 1 : 0), 0);
+    document.getElementById('profileReports').textContent = myReports.length;
+    document.getElementById('profileVerifications').textContent = myVerifications;
+    document.getElementById('profilePoints').textContent = currentUser.reputationPoints;
+    let badges = [];
+    if (myReports.length >= 1) badges.push('<span class="achievement-badge">🌱 First Report</span>');
+    if (myReports.length >= 5) badges.push('<span class="achievement-badge">⭐ Active Reporter</span>');
+    if (myReports.length >= 10) badges.push('<span class="achievement-badge">🏅 Senior Reporter</span>');
+    if (currentUser.schoolName) badges.push(`<span class="achievement-badge">🎓 ${currentUser.schoolName}</span>`);
+    document.getElementById('profileBadges').innerHTML = badges.join('');
+    const activityLog = document.getElementById('activityLog');
+    if (myReports.length === 0) { activityLog.innerHTML = '<div class="empty-state" style="padding:20px"><p>No activity yet</p></div>'; }
+    else { activityLog.innerHTML = myReports.slice(0, 10).map(r => `<div style="padding:10px;background:var(--bg-primary);border-radius:var(--radius-sm);margin-bottom:8px;border:1px solid var(--border)"><div style="font-size:0.8rem;font-weight:500">Submitted ${r.reportId} at ${r.locationName}</div><div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px">${timeAgo(r.timestamp)}</div></div>`).join(''); }
+}
+
+// ============ BADGES ============
+function updateBadges() {
+    ['waterlogging','dengue','garbage'].forEach(type => {
+        const count = reports.filter(r => r.type === type && r.status !== 'resolved').length;
+        const el = document.getElementById(type === 'waterlogging' ? 'waterBadge' : type === 'dengue' ? 'dengueBadge' : 'garbageBadge');
+        if (count > 0) { el.textContent = count; el.style.display = 'inline'; } else el.style.display = 'none';
+    });
+}
+
+// ============ NOTIFICATIONS ============
+function addNotification(report) {
+    const emoji = report.type === 'waterlogging' ? '🌊' : report.type === 'dengue' ? '🦟' : '🗑️';
+    notifications.unshift({ text: `${emoji} New report ${report.reportId} at ${report.locationName}`, time: new Date().toISOString() });
+    if (notifications.length > 20) notifications = notifications.slice(0, 20);
+    localStorage.setItem('cleanbd_notifs', JSON.stringify(notifications));
+    document.getElementById('notifDot').style.display = 'block';
+    renderNotifications();
+}
+function renderNotifications() {
+    const container = document.getElementById('notifList');
+    if (notifications.length === 0) { container.innerHTML = '<div class="empty-state" style="padding:20px"><p>No notifications yet</p></div>'; return; }
+    container.innerHTML = notifications.slice(0,10).map(n => `<div class="notif-item"><strong>${n.text}</strong><div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px">${timeAgo(n.time)}</div></div>`).join('');
+}
+function toggleNotifications() { document.getElementById('notifPanel').classList.toggle('show'); document.getElementById('notifDot').style.display = 'none'; }
+
+// ============ ROUTES ============
+function findSafeRoute() {
+    const from = document.getElementById('routeFrom').value;
+    const to = document.getElementById('routeTo').value;
+    if (!from || !to) return showToast('Please select both points', 'error');
+    if (from === to) return showToast('Points must be different', 'error');
+    const [fromLat, fromLng] = from.split(',').map(Number);
+    const [toLat, toLng] = to.split(',').map(Number);
+    map.setView([(fromLat+toLat)/2, (fromLng+toLng)/2], 13);
+    L.polyline([[fromLat,fromLng],[toLat,toLng]], { color: '#34a853', weight: 4, opacity: 0.7, dashArray: '10, 6' }).addTo(map);
+    L.marker([fromLat,fromLng], { icon: makeIcon('#34a853','🟢') }).bindPopup('Start').addTo(map);
+    L.marker([toLat,toLng], { icon: makeIcon('#ea4335','🔴') }).bindPopup('Destination').addTo(map);
+    const hazards = reports.filter(r => r.type === 'waterlogging' && r.status !== 'resolved');
+    const container = document.getElementById('routeResults');
+    container.innerHTML = `<div class="info-banner" style="border-color:${hazards.length>0?'var(--warning)':'var(--success)'}"><i class="fas fa-exclamation-triangle" style="color:${hazards.length>0?'var(--warning)':'var(--success)'}"></i><p>${hazards.length} active waterlogging report(s). Check the map.</p></div><button class="btn btn-outline btn-full" style="margin-top:12px" onclick="clearRoute()"><i class="fas fa-times"></i> Clear Route</button>`;
+    showToast('Route displayed on map', 'info');
+}
+function clearRoute() { map.eachLayer(l => { if (l instanceof L.Polyline && !(l instanceof L.Polygon)) map.removeLayer(l); }); document.getElementById('routeResults').innerHTML = ''; }
+
+// ============ SEARCH ============
+function searchLocation() {
+    const query = document.getElementById('mapSearch').value.trim().toLowerCase();
+    if (!query) return;
+    const areaMap = { 'farmgate':[23.7597,90.3746],'mirpur':[23.8042,90.3683],'dhanmondi':[23.7465,90.3762],'gulshan':[23.7925,90.4072],'banani':[23.7935,90.4010],'uttara':[23.8740,90.3980],'mohakhali':[23.7720,90.3930],'motijheel':[23.7330,90.4178],'old dhaka':[23.7105,90.3995],'mohammadpur':[23.7655,90.3520],'tejgaon':[23.7610,90.3860],'jatrabari':[23.7200,90.4250],'rampura':[23.7610,90.4130],'badda':[23.7806,90.4220],'bashundhara':[23.8140,90.4340] };
+    if (areaMap[query]) { map.setView(areaMap[query], 15); showToast(`Showing ${query}`, 'info'); }
+    else showToast('Location not found. Try: Farmgate, Mirpur, Dhanmondi, Gulshan, Uttara', 'error');
+}
+
+// ============ UTILITIES ============
+function saveReports() { try { localStorage.setItem('cleanbd_reports', JSON.stringify(reports)); } catch (e) { const lite = reports.map(r => ({ ...r, photos: [] })); localStorage.setItem('cleanbd_reports', JSON.stringify(lite)); showToast('Storage full. Photos removed.', 'info'); } }
+function timeAgo(isoString) { const diff = Math.floor((new Date() - new Date(isoString)) / 1000); if (diff < 60) return 'Just now'; if (diff < 3600) return `${Math.floor(diff/60)} min ago`; if (diff < 86400) return `${Math.floor(diff/3600)} hours ago`; if (diff < 604800) return `${Math.floor(diff/86400)} days ago`; return new Date(isoString).toLocaleDateString(); }
+function showToast(msg, type = 'info') { const container = document.getElementById('toastContainer'); const toast = document.createElement('div'); toast.className = `toast ${type}`; const iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' }; toast.innerHTML = `<i class="fas ${iconMap[type]}" style="color:var(--${type==='success'?'success':type==='error'?'danger':'info'})"></i> ${msg}`; container.appendChild(toast); setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3500); }
+function locateMe() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { map.setView([pos.coords.latitude, pos.coords.longitude], 15); L.marker([pos.coords.latitude, pos.coords.longitude], { icon: makeIcon('#9c27b0','📍') }).bindPopup('<strong>Your Location</strong>').addTo(map); showToast('Location found!', 'success'); }, () => showToast('Could not get location', 'error')); } }
+function resetMapView() { map.setView([23.8103, 90.4125], 12); if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; } }
+function exportData() { if (reports.length === 0) return showToast('No reports to export', 'error'); const blob = new Blob([JSON.stringify(reports, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `cleanbd_reports_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); showToast('Data exported!', 'success'); }
+function clearAllData() { if (!confirm('Delete ALL reports? This cannot be undone.')) return; reports = []; saveReports(); renderAllMarkers(); refreshReportLists(); updateBadges(); showToast('All data cleared', 'info'); }
+function showEmergency() { document.getElementById('sosModal').classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function toggleTheme() { const html = document.documentElement; const current = html.getAttribute('data-theme'); html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark'); localStorage.setItem('cleanbd_theme', html.getAttribute('data-theme')); }
+const savedTheme = localStorage.getItem('cleanbd_theme');
+if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+// ============ INIT ============
+renderAllMarkers();
+refreshReportLists();
+updateBadges();
+updateLayerButtons();
+renderNotifications();
+checkAuth();
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal('detailModal'); closeModal('sosModal'); closeModal('editProfileModal'); document.getElementById('notifPanel').classList.remove('show'); }
+});
+document.addEventListener('click', e => {
+    const panel = document.getElementById('notifPanel');
+    if (panel.classList.contains('show') && !panel.contains(e.target) && !e.target.closest('.top-btn')) panel.classList.remove('show');
+});
+</script>
+</body>
+</html>

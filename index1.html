@@ -1,0 +1,2683 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CleanBD — Bangladesh Environmental Reporting System</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg-primary:#f5f7fa;--bg-secondary:#ffffff;--bg-tertiary:#f0f2f5;
+--text-primary:#1a1d23;--text-secondary:#5f6368;--text-muted:#9aa0a6;
+--border:#e1e5ea;--accent:#006a4e;--accent-light:#00896a;--accent-bg:rgba(0,106,78,0.08);
+--danger:#ea4335;--warning:#fbbc04;--info:#4285f4;--success:#34a853;
+--shadow-sm:0 1px 3px rgba(0,0,0,0.06);--shadow-md:0 4px 12px rgba(0,0,0,0.08);
+--shadow-lg:0 8px 30px rgba(0,0,0,0.12);
+--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-xl:20px;
+--transition:all 0.25s cubic-bezier(0.4,0,0.2,1);--sidebar-width:280px;
+}
+[data-theme="dark"]{
+--bg-primary:#0f1117;--bg-secondary:#1a1d27;--bg-tertiary:#252830;
+--text-primary:#e8eaed;--text-secondary:#9aa0a6;--text-muted:#5f6368;
+--border:#2d3039;--accent:#00c48c;--accent-light:#00e6a5;--accent-bg:rgba(0,196,140,0.1);
+--shadow-sm:0 1px 3px rgba(0,0,0,0.2);--shadow-md:0 4px 12px rgba(0,0,0,0.3);
+--shadow-lg:0 8px 30px rgba(0,0,0,0.4);
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-primary);color:var(--text-primary);overflow:hidden;height:100vh}
+.app-layout{display:flex;height:100vh}
+.sidebar{width:var(--sidebar-width);background:var(--bg-secondary);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:var(--transition)}
+.sidebar-header{padding:20px;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent-light));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:white}
+.logo-text h1{font-size:1.1rem;font-weight:700}
+.logo-text span{font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px}
+.nav-section{padding:16px 12px;flex:1;overflow-y:auto}
+.nav-section::-webkit-scrollbar{width:4px}
+.nav-section::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.nav-label{font-size:0.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;padding:8px 12px;margin-top:8px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);color:var(--text-secondary);font-size:0.85rem;font-weight:500;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.nav-item:hover{background:var(--bg-tertiary);color:var(--text-primary)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:600}
+.nav-item i{width:20px;text-align:center;font-size:0.9rem}
+.nav-badge{margin-left:auto;background:var(--danger);color:white;font-size:0.6rem;padding:2px 6px;border-radius:10px;font-weight:700}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
+.theme-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:var(--radius-sm);background:var(--bg-tertiary);cursor:pointer;border:none;width:100%;color:var(--text-secondary);font-size:0.8rem;font-family:inherit}
+.toggle-switch{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;transition:var(--transition)}
+.toggle-switch::after{content:'';width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:var(--transition);box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+[data-theme="dark"] .toggle-switch{background:var(--accent)}
+[data-theme="dark"] .toggle-switch::after{left:18px}
+.main-content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border)}
+.top-bar-left{display:flex;align-items:center;gap:16px}
+.page-title{font-size:1.1rem;font-weight:700}
+.page-subtitle{font-size:0.75rem;color:var(--text-muted)}
+.top-bar-right{display:flex;align-items:center;gap:12px}
+.top-btn{width:36px;height:36px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);transition:var(--transition);position:relative}
+.top-btn:hover{background:var(--bg-tertiary);color:var(--text-primary)}
+.notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--bg-secondary)}
+.sos-btn{padding:8px 16px;background:var(--danger);color:white;border:none;border-radius:var(--radius-sm);font-size:0.75rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:var(--transition);font-family:inherit}
+.sos-btn:hover{background:#d32f2f;transform:scale(1.02)}
+.user-profile-btn{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-secondary);cursor:pointer;transition:var(--transition)}
+.user-profile-btn:hover{background:var(--bg-tertiary)}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-light));display:flex;align-items:center;justify-content:center;color:white;font-size:0.75rem;font-weight:700}
+.user-points{font-size:0.7rem;font-weight:600;color:var(--accent)}
+.content-area{flex:1;display:flex;overflow:hidden}
+.panel{width:500px;background:var(--bg-secondary);border-right:1px solid var(--border);overflow-y:auto;padding:20px}
+.panel::-webkit-scrollbar{width:5px}
+.panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.map-wrapper{flex:1;position:relative}
+#map{width:100%;height:100%}
+.card{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;transition:var(--transition)}
+.card:hover{box-shadow:var(--shadow-md)}
+.card-title{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:0.95rem;font-weight:600}
+.card-title .icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85rem}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:0.72rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.3px}
+.form-label .req{color:var(--danger)}
+.form-input,.form-select{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.85rem;background:var(--bg-primary);color:var(--text-primary);transition:var(--transition);font-family:inherit}
+.form-input:focus,.form-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.form-input::placeholder{color:var(--text-muted)}
+textarea.form-input{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-hint{font-size:0.7rem;color:var(--text-muted);margin-top:4px}
+.selection-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.selection-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.selection-card{padding:12px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);text-align:center;cursor:pointer;transition:var(--transition);font-size:0.75rem;font-weight:500;background:var(--bg-primary)}
+.selection-card:hover{border-color:var(--accent)}
+.selection-card.selected{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.sel-icon{font-size:1.2rem;margin-bottom:4px}
+.sel-label{font-weight:600}
+.sel-desc{font-size:0.65rem;color:var(--text-muted);margin-top:2px}
+.upload-area{border:2px dashed var(--border);border-radius:var(--radius-md);padding:24px;text-align:center;cursor:pointer;transition:var(--transition);background:var(--bg-primary)}
+.upload-area:hover{border-color:var(--accent);background:var(--accent-bg)}
+.upload-area i{font-size:1.5rem;color:var(--accent);margin-bottom:8px}
+.upload-area p{font-size:0.8rem;color:var(--text-secondary)}
+.upload-area small{font-size:0.65rem;color:var(--text-muted)}
+.preview-container{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.preview-thumb{position:relative;width:80px;height:80px}
+.preview-thumb img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm);border:2px solid var(--border)}
+.preview-thumb .remove-photo{position:absolute;top:-6px;right:-6px;width:20px;height:20px;background:var(--danger);color:white;border:none;border-radius:50%;cursor:pointer;font-size:0.65rem;display:flex;align-items:center;justify-content:center}
+.btn{padding:11px 20px;border:none;border-radius:var(--radius-sm);font-size:0.85rem;font-weight:600;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+.btn-full{width:100%}
+.btn-accent{background:var(--accent);color:white}
+.btn-accent:hover{background:var(--accent-light);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,106,78,0.3)}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text-secondary)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+.btn-danger{background:var(--danger);color:white}
+.btn-danger:hover{background:#d32f2f}
+.btn-success{background:var(--success);color:white}
+.btn-success:hover{background:#2d9348}
+.btn-sm{padding:6px 12px;font-size:0.75rem}
+.report-item{padding:14px;border-radius:var(--radius-md);background:var(--bg-primary);border:1px solid var(--border);margin-bottom:10px;cursor:pointer;transition:var(--transition)}
+.report-item:hover{border-color:var(--accent);transform:translateX(3px);box-shadow:var(--shadow-sm)}
+.report-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px}
+.report-title{font-size:0.85rem;font-weight:600;flex:1}
+.report-id{font-size:0.65rem;color:var(--text-muted);font-family:monospace}
+.report-meta{font-size:0.7rem;color:var(--text-muted);display:flex;align-items:center;gap:4px;margin-top:4px}
+.report-time{font-size:0.65rem;color:var(--text-muted);margin-top:6px}
+.report-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.status-pill{font-size:0.6rem;padding:3px 8px;border-radius:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap}
+.status-new{background:rgba(234,67,53,0.1);color:var(--danger)}
+.status-review{background:rgba(66,133,244,0.1);color:var(--info)}
+.status-progress{background:rgba(251,188,4,0.15);color:#b8860b}
+.status-resolved{background:rgba(52,168,83,0.1);color:var(--success)}
+.empty-state{text-align:center;padding:40px 20px}
+.empty-state i{font-size:2.5rem;color:var(--text-muted);margin-bottom:12px}
+.empty-state h4{font-size:0.95rem;color:var(--text-secondary);margin-bottom:6px}
+.empty-state p{font-size:0.8rem;color:var(--text-muted)}
+.stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.stat-box{padding:14px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius-md);text-align:center}
+.stat-value{font-size:1.5rem;font-weight:700;color:var(--accent)}
+.stat-label{font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;margin-top:2px}
+.map-floating{position:absolute;top:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px}
+.map-fab{width:40px;height:40px;border-radius:var(--radius-sm);background:var(--bg-secondary);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);transition:var(--transition);box-shadow:var(--shadow-sm)}
+.map-fab:hover{background:var(--accent);color:white;border-color:var(--accent)}
+.map-fab.active{background:var(--accent);color:white;border-color:var(--accent)}
+.map-legend{position:absolute;bottom:30px;left:16px;z-index:999;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px;box-shadow:var(--shadow-md)}
+.legend-title{font-size:0.7rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px}
+.legend-items{display:flex;flex-direction:column;gap:6px}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:0.75rem;color:var(--text-secondary)}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:14px 20px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;font-size:0.85rem;animation:slideIn 0.3s ease;min-width:280px}
+.toast.success{border-left:4px solid var(--success)}
+.toast.error{border-left:4px solid var(--danger)}
+.toast.info{border-left:4px solid var(--info)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-backdrop.show{display:flex}
+.modal-box{background:var(--bg-secondary);border-radius:var(--radius-xl);padding:28px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;animation:modalPop 0.25s ease}
+@keyframes modalPop{from{transform:scale(0.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.modal-head h2{font-size:1.1rem}
+.modal-close-btn{width:30px;height:30px;border-radius:8px;border:none;background:var(--bg-tertiary);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);transition:var(--transition)}
+.modal-close-btn:hover{background:var(--danger);color:white}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.info-banner{background:var(--accent-bg);border:1px solid rgba(0,106,78,0.2);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px}
+.info-banner i{color:var(--accent);margin-top:2px}
+.info-banner p{font-size:0.8rem;color:var(--text-secondary);line-height:1.5}
+.emergency-list{display:flex;flex-direction:column;gap:8px}
+.emergency-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.em-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem}
+.em-info{flex:1}
+.em-name{font-size:0.8rem;font-weight:600}
+.em-number{font-size:0.7rem;color:var(--text-muted)}
+.em-call{padding:6px 12px;background:var(--success);color:white;border:none;border-radius:6px;font-size:0.7rem;font-weight:600;cursor:pointer;text-decoration:none}
+.tip-card{background:linear-gradient(135deg,var(--accent),var(--accent-light));color:white;border-radius:var(--radius-lg);padding:20px;margin-bottom:16px}
+.tip-card h4{font-size:0.85rem;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.tip-card p{font-size:0.75rem;opacity:0.9;line-height:1.5}
+.progress-track{height:6px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;margin-top:6px}
+.progress-bar-fill{height:100%;border-radius:3px;transition:width 0.6s ease}
+.search-wrap{position:relative;margin-bottom:16px}
+.search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.85rem;background:var(--bg-primary);color:var(--text-primary);transition:var(--transition)}
+.search-wrap input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.search-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.85rem}
+.filter-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.chip{padding:5px 12px;border-radius:20px;font-size:0.7rem;font-weight:500;border:1.5px solid var(--border);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;transition:var(--transition)}
+.chip:hover,.chip.active{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.verify-btn,.resolve-btn{padding:4px 10px;border-radius:6px;font-size:0.65rem;font-weight:600;border:1px solid;cursor:pointer;transition:var(--transition);background:transparent}
+.verify-btn{border-color:var(--info);color:var(--info)}
+.verify-btn:hover{background:var(--info);color:white}
+.resolve-btn{border-color:var(--success);color:var(--success)}
+.resolve-btn:hover{background:var(--success);color:white}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-head h3{font-size:0.85rem;font-weight:600}
+.section-head a{font-size:0.7rem;color:var(--accent);text-decoration:none;cursor:pointer}
+.notif-panel{position:absolute;top:50px;right:16px;width:340px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);z-index:1000;display:none;padding:16px;max-height:500px;overflow-y:auto}
+.notif-panel.show{display:block}
+.notif-panel h4{font-size:0.85rem;margin-bottom:12px}
+.notif-item{padding:10px;border-radius:var(--radius-sm);background:var(--bg-primary);margin-bottom:8px;font-size:0.75rem;color:var(--text-secondary);border-left:3px solid var(--accent)}
+.notif-item strong{color:var(--text-primary);display:block;margin-bottom:4px}
+.fade-in{animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.detail-item{padding:12px;background:var(--bg-primary);border-radius:var(--radius-sm);border:1px solid var(--border)}
+.detail-label{font-size:0.65rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;letter-spacing:0.3px}
+.detail-value{font-size:0.85rem;color:var(--text-primary);font-weight:500}
+.photo-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px}
+.photo-gallery img{width:100%;height:100px;object-fit:cover;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);border:1px solid var(--border)}
+.photo-gallery img:hover{transform:scale(1.03)}
+.comment-section{margin-top:20px;padding-top:20px;border-top:1px solid var(--border)}
+.comment-input{display:flex;gap:8px;margin-bottom:12px}
+.comment-input input{flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.85rem;background:var(--bg-primary);color:var(--text-primary);font-family:inherit}
+.comment-input input:focus{outline:none;border-color:var(--accent)}
+.comment-item{padding:10px;background:var(--bg-primary);border-radius:var(--radius-sm);margin-bottom:8px;border:1px solid var(--border)}
+.comment-author{font-size:0.75rem;font-weight:600;color:var(--accent)}
+.comment-text{font-size:0.85rem;color:var(--text-primary);margin-top:4px}
+.comment-time{font-size:0.65rem;color:var(--text-muted);margin-top:4px}
+.status-timeline{display:flex;align-items:center;justify-content:space-between;margin:20px 0;position:relative}
+.status-timeline::before{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:var(--border);z-index:0}
+.timeline-step{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+.timeline-dot{width:28px;height:28px;border-radius:50%;background:var(--bg-secondary);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-muted)}
+.timeline-step.completed .timeline-dot{background:var(--success);border-color:var(--success);color:white}
+.timeline-step.current .timeline-dot{background:var(--info);border-color:var(--info);color:white;animation:pulse 2s infinite}
+.timeline-label{font-size:0.65rem;color:var(--text-muted);font-weight:500;text-align:center}
+.timeline-step.completed .timeline-label,.timeline-step.current .timeline-label{color:var(--text-primary);font-weight:600}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(66,133,244,0.5)}50%{box-shadow:0 0 0 8px rgba(66,133,244,0)}}
+.leaderboard-item{display:flex;align-items:center;padding:10px;background:var(--bg-primary);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px}
+.leaderboard-rank{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;margin-right:10px;background:var(--bg-tertiary);color:var(--text-secondary)}
+.rank-1{background:linear-gradient(135deg,#ffd700,#ffb800);color:#5a4000}
+.rank-2{background:linear-gradient(135deg,#c0c0c0,#a0a0a0);color:#333}
+.rank-3{background:linear-gradient(135deg,#cd7f32,#b8722d);color:white}
+.leaderboard-info{flex:1}
+.leaderboard-name{font-size:0.85rem;font-weight:600}
+.leaderboard-detail{font-size:0.7rem;color:var(--text-muted)}
+.leaderboard-score{font-size:1rem;font-weight:700;color:var(--accent)}
+.leaflet-popup-content-wrapper{border-radius:12px!important;box-shadow:var(--shadow-lg)!important}
+[data-theme="dark"] .leaflet-popup-content-wrapper{background:var(--bg-secondary)!important;color:var(--text-primary)!important}
+[data-theme="dark"] .leaflet-popup-tip{background:var(--bg-secondary)!important}
+.custom-popup h4{font-size:0.9rem;margin-bottom:6px;color:var(--accent)}
+.custom-popup p{font-size:0.75rem;color:var(--text-secondary);margin-bottom:3px}
+.weather-widget{background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:var(--radius-md);padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+[data-theme="dark"] .weather-widget{background:linear-gradient(135deg,#1a3a5c,#0d253f)}
+.weather-icon{font-size:2rem}
+.weather-info h4{font-size:0.85rem;color:#1565c0}
+[data-theme="dark"] .weather-info h4{color:#64b5f6}
+.weather-info p{font-size:0.7rem;color:#42a5f5}
+[data-theme="dark"] .weather-info p{color:#90caf9}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.badge-inline{display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.65rem;font-weight:600}
+.priority-high{background:rgba(234,67,53,0.1);color:var(--danger)}
+.priority-medium{background:rgba(251,188,4,0.15);color:#b8860b}
+.priority-low{background:rgba(52,168,83,0.1);color:var(--success)}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.profile-stat{text-align:center;padding:16px;background:var(--bg-primary);border-radius:var(--radius-md);border:1px solid var(--border)}
+.profile-stat-value{font-size:1.8rem;font-weight:700;color:var(--accent)}
+.profile-stat-label{font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;margin-top:4px}
+.achievement-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:20px;font-size:0.75rem;font-weight:600;color:var(--accent);margin-right:8px;margin-bottom:8px}
+@media(max-width:1024px){.panel{width:380px}}
+@media(max-width:768px){.sidebar{display:none}.panel{width:100%;max-height:45vh}.content-area{flex-direction:column}.map-wrapper{height:55vh}.detail-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.profile-stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app-layout">
+<aside class="sidebar">
+<div class="sidebar-header">
+<div class="logo">
+<div class="logo-icon"><i class="fas fa-leaf"></i></div>
+<div class="logo-text">
+<h1>CleanBD</h1>
+<span>Environmental Reporter</span>
+</div>
+</div>
+</div>
+<nav class="nav-section">
+<div class="nav-label">Report Issues</div>
+<button class="nav-item active" data-view="waterlogging" onclick="switchView('waterlogging')">
+<i class="fas fa-water"></i> Waterlogging
+<span class="nav-badge" id="waterBadge" style="display:none">0</span>
+</button>
+<button class="nav-item" data-view="dengue" onclick="switchView('dengue')">
+<i class="fas fa-mosquito"></i> DengueWatch
+<span class="nav-badge" id="dengueBadge" style="display:none">0</span>
+</button>
+<button class="nav-item" data-view="garbage" onclick="switchView('garbage')">
+<i class="fas fa-trash-alt"></i> Garbage Spotter
+<span class="nav-badge" id="garbageBadge" style="display:none">0</span>
+</button>
+
+<div class="nav-label">Explore</div>
+<button class="nav-item" data-view="dashboard" onclick="switchView('dashboard')">
+<i class="fas fa-chart-bar"></i> Dashboard
+</button>
+<button class="nav-item" data-view="map-view" onclick="switchView('map-view')">
+<i class="fas fa-map-marked-alt"></i> Full Map
+</button>
+<button class="nav-item" data-view="routes" onclick="switchView('routes')">
+<i class="fas fa-route"></i> Safe Routes
+</button>
+<button class="nav-item" data-view="history" onclick="switchView('history')">
+<i class="fas fa-history"></i> My Reports
+</button>
+<button class="nav-item" data-view="leaderboard" onclick="switchView('leaderboard')">
+<i class="fas fa-trophy"></i> Leaderboard
+</button>
+<button class="nav-item" data-view="profile" onclick="switchView('profile')">
+<i class="fas fa-user"></i> My Profile
+</button>
+
+<div class="nav-label">Resources</div>
+<button class="nav-item" data-view="education" onclick="switchView('education')">
+<i class="fas fa-graduation-cap"></i> Learn & Tips
+</button>
+<button class="nav-item" data-view="emergency" onclick="switchView('emergency')">
+<i class="fas fa-phone-alt"></i> Emergency
+</button>
+<button class="nav-item" data-view="about" onclick="switchView('about')">
+<i class="fas fa-info-circle"></i> About CleanBD
+</button>
+</nav>
+<div class="sidebar-footer">
+<button class="theme-toggle" onclick="toggleTheme()">
+<span><i class="fas fa-moon"></i> Dark Mode</span>
+<div class="toggle-switch"></div>
+</button>
+</div>
+</aside>
+
+<div class="main-content">
+<div class="top-bar">
+<div class="top-bar-left">
+<div>
+<div class="page-title" id="pageTitle">Waterlogging Reporter</div>
+<div class="page-subtitle" id="pageSubtitle">Report flooded roads and waterlogged areas in Dhaka</div>
+</div>
+</div>
+<div class="top-bar-right">
+<button class="top-btn" onclick="toggleNotifications()" title="Notifications">
+<i class="fas fa-bell"></i>
+<span class="notif-dot" id="notifDot" style="display:none"></span>
+</button>
+<button class="top-btn" onclick="exportData()" title="Export Data">
+<i class="fas fa-download"></i>
+</button>
+<button class="user-profile-btn" onclick="switchView('profile')" id="userProfileBtn" style="display:none">
+<div class="user-avatar" id="userAvatar">U</div>
+<div>
+<div style="font-size:0.75rem;font-weight:600" id="userName">User</div>
+<div class="user-points" id="userPoints">0 pts</div>
+</div>
+</button>
+<button class="btn btn-accent" onclick="showLoginModal()" id="loginBtn">
+<i class="fas fa-sign-in-alt"></i> Login
+</button>
+<button class="sos-btn" onclick="showEmergency()">
+<i class="fas fa-exclamation-triangle"></i> SOS
+</button>
+</div>
+</div>
+
+<div class="content-area">
+<div class="panel" id="panel">
+
+<!-- WATERLOGGING -->
+<div class="tab-panel active" id="view-waterlogging">
+<div class="weather-widget">
+<div class="weather-icon">🌧️</div>
+<div class="weather-info">
+<h4>Monsoon Alert — Dhaka</h4>
+<p>Heavy rainfall expected • Humidity 89% • 32°C</p>
+</div>
+</div>
+
+<div class="info-banner">
+<i class="fas fa-info-circle"></i>
+<p>Click anywhere on the map to select a location, or choose from the dropdown. Detailed reports help authorities respond faster and keep fellow citizens informed.</p>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-plus"></i></div>
+Submit Waterlogging Report
+</div>
+
+<div class="form-group">
+<label class="form-label">Area / Location <span class="req">*</span></label>
+<select class="form-select" id="wlLocation">
+<option value="">Choose area or click map...</option>
+<option value="23.7597,90.3746">Farmgate (Bijoy Sarani)</option>
+<option value="23.8042,90.3683">Mirpur 10</option>
+<option value="23.8130,90.3650">Mirpur 11</option>
+<option value="23.7465,90.3762">Dhanmondi 27</option>
+<option value="23.7720,90.3930">Mohakhali</option>
+<option value="23.7925,90.4072">Gulshan 1</option>
+<option value="23.7935,90.4010">Banani 11</option>
+<option value="23.8740,90.3980">Uttara Sector 3</option>
+<option value="23.8630,90.3890">Uttara Sector 7</option>
+<option value="23.7330,90.4178">Motijheel</option>
+<option value="23.7105,90.3995">Old Dhaka (Nawabpur)</option>
+<option value="23.7655,90.3520">Mohammadpur</option>
+<option value="23.7610,90.3860">Tejgaon</option>
+<option value="23.7200,90.4250">Jatrabari</option>
+<option value="23.7340,90.4200">Sayedabad</option>
+<option value="23.7610,90.4130">Rampura</option>
+<option value="23.7806,90.4220">Badda</option>
+<option value="23.8060,90.4250">Kuril</option>
+<option value="23.8140,90.4340">Bashundhara R/A</option>
+<option value="custom">📍 Custom (click map)</option>
+</select>
+</div>
+
+<div class="form-group">
+<label class="form-label">Street / Road Name <span class="req">*</span></label>
+<input type="text" class="form-input" id="wlStreet" placeholder="e.g., Bijoy Sarani, Mirpur Road">
+</div>
+
+<div class="form-row">
+<div class="form-group">
+<label class="form-label">Water Depth <span class="req">*</span></label>
+<div class="selection-grid">
+<div class="selection-card" onclick="selectOption('wlDepth','ankle',this)">
+<div class="sel-icon">🟢</div>
+<div class="sel-label">Ankle</div>
+<div class="sel-desc">Below 1 ft</div>
+</div>
+<div class="selection-card" onclick="selectOption('wlDepth','knee',this)">
+<div class="sel-icon">🟡</div>
+<div class="sel-label">Knee</div>
+<div class="sel-desc">1-2 ft</div>
+</div>
+<div class="selection-card" onclick="selectOption('wlDepth','waist',this)">
+<div class="sel-icon">🟠</div>
+<div class="sel-label">Waist</div>
+<div class="sel-desc">2-3 ft</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="form-group">
+<label class="form-label">Water Condition</label>
+<div class="selection-grid-4">
+<div class="selection-card" onclick="selectOption('wlCondition','clear',this)">
+<div class="sel-icon">💧</div>
+<div class="sel-label">Clear</div>
+</div>
+<div class="selection-card" onclick="selectOption('wlCondition','muddy',this)">
+<div class="sel-icon">🟤</div>
+<div class="sel-label">Muddy</div>
+</div>
+<div class="selection-card" onclick="selectOption('wlCondition','dirty',this)">
+<div class="sel-icon">🟫</div>
+<div class="sel-label">Dirty</div>
+</div>
+<div class="selection-card" onclick="selectOption('wlCondition','sewage',this)">
+<div class="sel-icon">⚠️</div>
+<div class="sel-label">Sewage</div>
+</div>
+</div>
+</div>
+
+<div class="form-group">
+<label class="form-label">Affected Area Type <span class="req">*</span></label>
+<select class="form-select" id="wlAreaType">
+<option value="">Select type...</option>
+<option value="main_road">Main Road</option>
+<option value="inner_road">Inner / Residential Road</option>
+<option value="intersection">Intersection / Crossing</option>
+<option value="underpass">Underpass</option>
+<option value="bridge">Bridge / Flyover Approach</option>
+<option value="school_path">School / College Path</option>
+<option value="market">Market Area</option>
+<option value="residential">Residential Area</option>
+</select>
+</div>
+
+<div class="form-group">
+<label class="form-label">Traffic Impact</label>
+<div class="selection-grid">
+<div class="selection-card" onclick="selectOption('wlTraffic','none',this)">
+<div class="sel-icon">🚶</div>
+<div class="sel-label">Pedestrians Only</div>
+</div>
+<div class="selection-card" onclick="selectOption('wlTraffic','partial',this)">
+<div class="sel-icon">🚗</div>
+<div class="sel-label">Partial Block</div>
+</div>
+<div class="selection-card" onclick="selectOption('wlTraffic','full',this)">
+<div class="sel-icon">🚫</div>
+<div class="sel-label">Fully Blocked</div>
+</div>
+</div>
+</div>
+
+<div class="form-row">
+<div class="form-group">
+<label class="form-label">Duration of Flooding</label>
+<select class="form-select" id="wlDuration">
+<option value="">Select...</option>
+<option value="just_started">Just started</option>
+<option value="1-2_hours">1-2 hours</option>
+<option value="3-6_hours">3-6 hours</option>
+<option value="6-12_hours">6-12 hours</option>
+<option value="1_day">Over 1 day</option>
+<option value="multiple_days">Multiple days</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">Priority Level</label>
+<select class="form-select" id="wlPriority">
+<option value="low">Low</option>
+<option value="medium" selected>Medium</option>
+<option value="high">High — Urgent</option>
+</select>
+</div>
+</div>
+
+<div class="form-group">
+<label class="form-label">Nearby Landmark (for identification)</label>
+<input type="text" class="form-input" id="wlLandmark" placeholder="e.g., Near Kakrail Mosque, Opposite Police Box">
+</div>
+
+<div class="form-group">
+<label class="form-label">Photos (up to 3)</label>
+<div class="upload-area" onclick="document.getElementById('wlPhoto').click()">
+<i class="fas fa-cloud-upload-alt"></i>
+<p>Click to upload photos</p>
+<small>JPG, PNG • Max 5MB each</small>
+</div>
+<input type="file" id="wlPhoto" accept="image/*" multiple style="display:none" onchange="handlePhotos(this,'wlPreviewContainer',3,'wl')">
+<div class="preview-container" id="wlPreviewContainer"></div>
+</div>
+
+<div class="form-group">
+<label class="form-label">Detailed Description <span class="req">*</span></label>
+<textarea class="form-input" id="wlNotes" placeholder="Describe the situation in detail: how deep is the water, is it safe to cross, any hazards like open manholes, affected vehicles, etc."></textarea>
+</div>
+
+<button class="btn btn-accent btn-full" onclick="submitReport('waterlogging')">
+<i class="fas fa-paper-plane"></i> Submit Report
+</button>
+</div>
+
+<div class="section-head">
+<h3>Recent Reports</h3>
+<a onclick="switchView('history')">View all</a>
+</div>
+<div class="filter-row">
+<span class="chip active" onclick="filterReports('waterlogging','all',this)">All</span>
+<span class="chip" onclick="filterReports('waterlogging','new',this)">New</span>
+<span class="chip" onclick="filterReports('waterlogging','review',this)">Under Review</span>
+<span class="chip" onclick="filterReports('waterlogging','progress',this)">In Progress</span>
+<span class="chip" onclick="filterReports('waterlogging','resolved',this)">Resolved</span>
+</div>
+<div id="wlReportsList"></div>
+</div>
+
+<!-- DENGUE -->
+<div class="tab-panel" id="view-dengue">
+<div class="tip-card" style="background:linear-gradient(135deg,#ea4335,#c62828)">
+<h4><i class="fas fa-shield-alt"></i> Dengue Prevention</h4>
+<p>Eliminate standing water around your home. Cover water containers. Clean drains weekly. Report breeding sites to help your community stay safe. Dengue cases rise sharply during monsoon season.</p>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(234,67,53,0.1);color:var(--danger)"><i class="fas fa-plus"></i></div>
+Report Dengue Breeding Site
+</div>
+
+<div class="form-group">
+<label class="form-label">Hazard Type <span class="req">*</span></label>
+<select class="form-select" id="dgType">
+<option value="">Select hazard type...</option>
+<option value="standing_water">Stagnant / Standing Water</option>
+<option value="open_container">Open Water Container (drum, bucket, pot)</option>
+<option value="blocked_drain">Blocked / Clogged Drain</option>
+<option value="garbage_water">Garbage with Water Accumulation</option>
+<option value="mosquito_heavy">Mosquito-Heavy Area</option>
+<option value="construction_water">Construction Site Water Pool</option>
+<option value="tire_water">Used Tire Collecting Water</option>
+<option value="coconut_shell">Coconut Shells / Plant Pots</option>
+<option value="refrigerator_tray">Fridge AC Water Tray</option>
+<option value="roof_water">Roof / Balcony Water Pool</option>
+</select>
+</div>
+
+<div class="form-group">
+<label class="form-label">Area / Location <span class="req">*</span></label>
+<select class="form-select" id="dgLocation">
+<option value="">Choose area or click map...</option>
+<option value="23.8042,90.3683">Mirpur 10</option>
+<option value="23.8130,90.3650">Mirpur 11</option>
+<option value="23.8740,90.3980">Uttara</option>
+<option value="23.7925,90.4072">Gulshan</option>
+<option value="23.7935,90.4010">Banani</option>
+<option value="23.7655,90.3520">Mohammadpur</option>
+<option value="23.7465,90.3762">Dhanmondi</option>
+<option value="23.7105,90.3995">Old Dhaka</option>
+<option value="23.7330,90.4178">Motijheel</option>
+<option value="23.7610,90.4130">Rampura</option>
+<option value="23.7806,90.4220">Badda</option>
+<option value="23.7620,90.4280">Khilgaon</option>
+<option value="23.7230,90.4680">Demra</option>
+<option value="custom">📍 Custom (click map)</option>
+</select>
+</div>
+
+<div class="form-group">
+<label class="form-label">Specific Address / Building Details <span class="req">*</span></label>
+<input type="text" class="form-input" id="dgAddress" placeholder="e.g., House 12, Road 5, behind the mosque">
+</div>
+
+<div class="form-group">
+<label class="form-label">Type of Property</label>
+<select class="form-select" id="dgProperty">
+<option value="">Select...</option>
+<option value="residential">Residential House</option>
+<option value="apartment">Apartment Building</option>
+<option value="commercial">Commercial / Shop</option>
+<option value="vacant_land">Vacant Land</option>
+<option value="construction">Construction Site</option>
+<option value="government">Government Property</option>
+<option value="school">School / Educational</option>
+<option value="mosque_temple">Mosque / Temple</option>
+<option value="garage">Garage / Workshop</option>
+</select>
+</div>
+
+<div class="form-group">
+<label class="form-label">Estimated Size of Breeding Site</label>
+<div class="selection-grid">
+<div class="selection-card" onclick="selectOption('dgSize','small',this)">
+<div class="sel-icon">🔹</div>
+<div class="sel-label">Small</div>
+<div class="sel-desc">< 1 sq meter</div>
+</div>
+<div class="selection-card" onclick="selectOption('dgSize','medium',this)">
+<div class="sel-icon">🔸</div>
+<div class="sel-label">Medium</div>
+<div class="sel-desc">1-5 sq m</div>
+</div>
+<div class="selection-card" onclick="selectOption('dgSize','large',this)">
+<div class="sel-icon">🔴</div>
+<div class="sel-label">Large</div>
+<div class="sel-desc">> 5 sq m</div>
+</div>
+</div>
+</div>
+
+<div class="form-group">
+<label class="form-label">Risk Level <span class="req">*</span></label>
+<div class="selection-grid">
+<div class="selection-card" onclick="selectOption('dgRisk','low',this)">
+<div class="sel-icon">🟢</div>
+<div class="sel-label">Low</div>
+<div class="sel-desc">Few mosquitoes</div>
+</div>
+<div class="selection-card" onclick="selectOption('dgRisk','moderate',this)">
+<div class="sel-icon">🟡</div>
+<div class="sel-label">Moderate</div>
+<div class="sel-desc">Noticeable</div>
+</div>
+<div class="selection-card" onclick="selectOption('dgRisk','high',this)">
+<div class="sel-icon">🔴</div>
+<div class="sel-label">High</div>
+<div class="sel-desc">Many mosquitoes</div>
+</div>
+</div>
+</div>
+
+<div class="form-group">
+<label class="form-label">Proximity to Sensitive Areas</label>
+<div style="display:flex;flex-direction:column;gap:6px">
+<label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;cursor:pointer">
+<input type="checkbox" class="dg-proximity" value="school"> Near School / College
+</label>
+<label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;cursor:pointer">
+<input type="checkbox" class="dg-proximity" value="hospital"> Near Hospital / Clinic
+</label>
+<label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;cursor:pointer">
+<input type="checkbox" class="dg-proximity" value="market"> Near Market
+</label>
+<label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;cursor:pointer">
+<input type="checkbox" class="dg-proximity" value="residential"> Dense Residential Area
+</label>
+<label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;cursor:pointer">
+<input type="checkbox" class="dg-proximity" value="children"> Area with Many Children
+</label>
+</div>
+</div>
+
+<div class="form-group">
+<label class="form-label">Known Dengue Cases Nearby</label>
+<select class="form-select" id="dgCases">
+<option value="none">No known cases</option>
+<option value="1-2">1-2 cases in area</option>
+<option value="3-5">3-5 cases in area</option>
+<option value="many">Many cases reported</option>
+<option value="unsure">Not sure</option>
+</select>
+</div>
+
+<div class="form-row">
+<div class="form-group">
+<label class="form-label">Priority Level</label>
+<select class="form-select" id="dgPriority">
+<option value="low">Low</option>
+<option value="medium" selected>Medium</option>
+<option value="high">High — Urgent</option>
+</select>
+</div>
+</div>
+
+<div class="form-group">
+<label class="form-label">Photos (up to 3)</label>
+<div class="upload-area" onclick="document.getElementById('dgPhoto').click()">
+<i class="fas fa-cloud-upload-alt"></i>
+<p>Click to upload photos of breeding site</p>
+<small>JPG, PNG • Max 5MB each</small>
+</div>
+<input type="file" id="dgPhoto" accept="image/*" multiple style="display:none" onchange="handlePhotos(this,'dgPreviewContainer',3,'dg')">
+<div class="preview-container" id="dgPreviewContainer"></div>
+</div>
+
+<div class="form-group">
+<label class="form-label">Detailed Description <span class="req">*</span></label>
+<textarea class="form-input" id="dgNotes" placeholder="Describe the breeding site: what type of container/water source, how long it has been there, any visible mosquito larvae, smell, etc."></textarea>
+</div>
+
+<button class="btn btn-danger btn-full" onclick="submitReport('dengue')">
+<i class="fas fa-exclamation-circle"></i> Submit Report
+</button>
+</div>
+
+<div class="section-head">
+<h3>Recent Reports</h3>
+<a onclick="switchView('history')">View all</a>
+</div>
+<div class="filter-row">
+<span class="chip active" onclick="filterReports('dengue','all',this)">All</span>
+<span class="chip" onclick="filterReports('dengue','new',this)">New</span>
+<span class="chip" onclick="filterReports('dengue','review',this)">Under Review</span>
+<span class="chip" onclick="filterReports('dengue','progress',this)">In Progress</span>
+<span class="chip" onclick="filterReports('dengue','resolved',this)">Resolved</span>
+</div>
+<div id="dgReportsList"></div>
+</div>
+
+<!-- GARBAGE -->
+<div class="tab-panel" id="view-garbage">
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(251,188,4,0.15);color:#b8860b"><i class="fas fa-plus"></i></div>
+Report Illegal Garbage Dump
+</div>
+
+<div class="form-group">
+<label class="form-label">Area / Location <span class="req">*</span></label>
+<select class="form-select" id="gbLocation">
+<option value="">Choose area or click map...</option>
+<option value="23.8042,90.3683">Mirpur 10</option>
+<option value="23.8130,90.3650">Mirpur 11</option>
+<option value="23.7597,90.3746">Farmgate</option>
+<option value="23.7720,90.3930">Mohakhali</option>
+<option value="23.7610,90.3860">Tejgaon</option>
+<option value="23.7340,90.4200">Sayedabad</option>
+<option value="23.7200,90.4250">Jatrabari</option>
+<option value="23.7465,90.3762">Dhanmondi</option>
+<option value="23.7655,90.3520">Mohammadpur</option>
+<option value="23.7105,90.3995">Old Dhaka</option>
+<option value="23.7230,90.4680">Demra</option>
+<option value="23.7620,90.4280">Khilgaon</option>
+<option value="23.7610,90.4130">Rampura</option>
+<option value="custom">📍 Custom (click map)</option>
+</select>
+</div>
+
+<div class="form-group">
+<label class="form-label">Exact Spot Description <span class="req">*</span></label>
+<input type="text" class="form-input" id="gbSpot" placeholder="e.g., Corner of Road 5 and Road 6, beside the drain">
+</div>
+
+<div class="form-group">
+<label class="form-label">Waste Type <span class="req">*</span></label>
+<select class="form-select" id="gbType">
+<option value="">Select waste type...</option>
+<option value="household">Household / Domestic Waste</option>
+<option value="plastic">Plastic Waste</option>
+<option value="construction">Construction Debris</option>
+<option value="medical">Medical / Clinical Waste</option>
+<option value="industrial">Industrial Waste</option>
+<option value="organic">Organic / Food Waste</option>
+<option value="mixed">Mixed Waste</option>
+<option value="hazardous">Hazardous / Chemical Waste</option>
+<option value="electronic">Electronic Waste (e-waste)</option>
+</select>
+</div>
+
+<div class="form-group">
+<label class="form-label">Estimated Amount <span class="req">*</span></label>
+<div class="selection-grid">
+<div class="selection-card" onclick="selectOption('gbAmount','small',this)">
+<div class="sel-icon">🗑️</div>
+<div class="sel-label">Small</div>
+<div class="sel-desc">Few bags</div>
+</div>
+<div class="selection-card" onclick="selectOption('gbAmount','medium',this)">
+<div class="sel-icon">📦</div>
+<div class="sel-label">Medium</div>
+<div class="sel-desc">Cart-load</div>
+</div>
+<div class="selection-card" onclick="selectOption('gbAmount','large',this)">
+<div class="sel-icon">🏔️</div>
+<div class="sel-label">Large</div>
+<div class="sel-desc">Truck-load</div>
+</div>
+</div>
+</div>
+
+<div class="form-group">
+<label class="form-label">Smell Level</label>
+<div class="selection-grid">
+<div class="selection-card" onclick="selectOption('gbSmell','none',this)">
+<div class="sel-icon">🌸</div>
+<div class="sel-label">None</div>
+</div>
+<div class="selection-card" onclick="selectOption('gbSmell','mild',this)">
+<div class="sel-icon">👃</div>
+<div class="sel-label">Mild</div>
+</div>
+<div class="selection-card" onclick="selectOption('gbSmell','strong',this)">
+<div class="sel-icon">🤢</div>
+<div class="sel-label">Strong</div>
+</div>
+</div>
+</div>
+
+<div class="form-group">
+<label class="form-label">How Long Has It Been There?</label>
+<select class="form-select" id="gbDuration">
+<option value="">Select...</option>
+<option value="today">Just today</option>
+<option value="few_days">Few days</option>
+<option value="week">About a week</option>
+<option value="weeks">Multiple weeks</option>
+<option value="months">Months / Permanent dump</option>
+</select>
+</div>
+
+<div class="form-group">
+<label class="form-label">Health / Safety Concerns</label>
+<div style="display:flex;flex-direction:column;gap:6px">
+<label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;cursor:pointer">
+<input type="checkbox" class="gb-concern" value="rats"> Rats / Rodents
+</label>
+<label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;cursor:pointer">
+<input type="checkbox" class="gb-concern" value="flies"> Flies / Insects
+</label>
+<label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;cursor:pointer">
+<input type="checkbox" class="gb-concern" value="stray_animals"> Stray Animals Feeding
+</label>
+<label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;cursor:pointer">
+<input type="checkbox" class="gb-concern" value="blocking_drain"> Blocking Drain
+</label>
+<label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;cursor:pointer">
+<input type="checkbox" class="gb-concern" value="children_play"> Children Play Nearby
+</label>
+</div>
+</div>
+
+<div class="form-row">
+<div class="form-group">
+<label class="form-label">Priority Level</label>
+<select class="form-select" id="gbPriority">
+<option value="low">Low</option>
+<option value="medium" selected>Medium</option>
+<option value="high">High — Urgent</option>
+</select>
+</div>
+</div>
+
+<div class="form-group">
+<label class="form-label">Photos (up to 3)</label>
+<div class="upload-area" onclick="document.getElementById('gbPhoto').click()">
+<i class="fas fa-cloud-upload-alt"></i>
+<p>Click to upload photos</p>
+<small>JPG, PNG • Max 5MB each</small>
+</div>
+<input type="file" id="gbPhoto" accept="image/*" multiple style="display:none" onchange="handlePhotos(this,'gbPreviewContainer',3,'gb')">
+<div class="preview-container" id="gbPreviewContainer"></div>
+</div>
+
+<div class="form-group">
+<label class="form-label">Detailed Description <span class="req">*</span></label>
+<textarea class="form-input" id="gbNotes" placeholder="Describe the dump: who is dumping, what time of day, any visible hazards like broken glass, needles, etc."></textarea>
+</div>
+
+<button class="btn btn-accent btn-full" style="background:#b8860b" onclick="submitReport('garbage')">
+<i class="fas fa-paper-plane"></i> Submit Report
+</button>
+</div>
+
+<div class="section-head">
+<h3>Recent Reports</h3>
+<a onclick="switchView('history')">View all</a>
+</div>
+<div class="filter-row">
+<span class="chip active" onclick="filterReports('garbage','all',this)">All</span>
+<span class="chip" onclick="filterReports('garbage','new',this)">New</span>
+<span class="chip" onclick="filterReports('garbage','review',this)">Under Review</span>
+<span class="chip" onclick="filterReports('garbage','progress',this)">In Progress</span>
+<span class="chip" onclick="filterReports('garbage','resolved',this)">Resolved</span>
+</div>
+<div id="gbReportsList"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="tab-panel" id="view-dashboard">
+<div class="stats-row">
+<div class="stat-box">
+<div class="stat-value" id="dashTotal">0</div>
+<div class="stat-label">Total Reports</div>
+</div>
+<div class="stat-box">
+<div class="stat-value" id="dashResolved" style="color:var(--success)">0</div>
+<div class="stat-label">Resolved</div>
+</div>
+<div class="stat-box">
+<div class="stat-value" id="dashPending" style="color:var(--warning)">0</div>
+<div class="stat-label">In Progress</div>
+</div>
+<div class="stat-box">
+<div class="stat-value" id="dashNew" style="color:var(--danger)">0</div>
+<div class="stat-label">New</div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-chart-pie"></i></div>
+By Category
+</div>
+<div id="categoryBreakdown"></div>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(52,168,83,0.1);color:var(--success)"><i class="fas fa-map-marker-alt"></i></div>
+Most Affected Areas
+</div>
+<div id="areaBreakdown"></div>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(156,39,176,0.1);color:#9c27b0"><i class="fas fa-clock"></i></div>
+Recent Activity
+</div>
+<div id="recentActivity"></div>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(251,188,4,0.15);color:#b8860b"><i class="fas fa-leaf"></i></div>
+Community Impact
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;font-size:0.85rem">
+<div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm)">
+<span>✅ Issues Resolved</span><strong id="impactResolved">0</strong>
+</div>
+<div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm)">
+<span>👥 Total Verifications</span><strong id="impactVerifications">0</strong>
+</div>
+<div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm)">
+<span>💬 Community Comments</span><strong id="impactComments">0</strong>
+</div>
+<div style="display:flex;justify-content:space-between;padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm)">
+<span>📸 Photos Submitted</span><strong id="impactPhotos">0</strong>
+</div>
+</div>
+</div>
+</div>
+
+<!-- MAP VIEW -->
+<div class="tab-panel" id="view-map-view">
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:var(--accent-bg);color:var(--accent)"><i class="fas fa-layer-group"></i></div>
+Map Layers
+</div>
+<p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:12px">Toggle layers to view different types of reports on the map.</p>
+<div style="display:flex;flex-direction:column;gap:8px">
+<label style="display:flex;align-items:center;gap:10px;font-size:0.85rem;cursor:pointer">
+<input type="checkbox" checked onchange="toggleMapLayer('water',this.checked)"> 🌊 Waterlogging
+</label>
+<label style="display:flex;align-items:center;gap:10px;font-size:0.85rem;cursor:pointer">
+<input type="checkbox" checked onchange="toggleMapLayer('dengue',this.checked)"> 🦟 Dengue Hazards
+</label>
+<label style="display:flex;align-items:center;gap:10px;font-size:0.85rem;cursor:pointer">
+<input type="checkbox" checked onchange="toggleMapLayer('garbage',this.checked)"> 🗑️ Garbage Dumps
+</label>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-search-location"></i></div>
+Search Area
+</div>
+<div class="search-wrap">
+<i class="fas fa-search"></i>
+<input type="text" placeholder="Search location in Dhaka..." id="mapSearch" onkeypress="if(event.key==='Enter')searchLocation()">
+</div>
+<button class="btn btn-outline btn-full" onclick="searchLocation()">
+<i class="fas fa-search"></i> Search
+</button>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(52,168,83,0.1);color:var(--success)"><i class="fas fa-filter"></i></div>
+Filter Reports
+</div>
+<div class="filter-row">
+<span class="chip active" onclick="filterMapByStatus('all',this)">All</span>
+<span class="chip" onclick="filterMapByStatus('new',this)">New</span>
+<span class="chip" onclick="filterMapByStatus('review',this)">Review</span>
+<span class="chip" onclick="filterMapByStatus('progress',this)">In Progress</span>
+<span class="chip" onclick="filterMapByStatus('resolved',this)">Resolved</span>
+</div>
+</div>
+</div>
+
+<!-- ROUTES -->
+<div class="tab-panel" id="view-routes">
+<div class="info-banner">
+<i class="fas fa-route"></i>
+<p>Find safe routes based on current waterlogging reports. Always verify conditions before traveling.</p>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(52,168,83,0.1);color:var(--success)"><i class="fas fa-search"></i></div>
+Find Safe Route
+</div>
+<div class="form-group">
+<label class="form-label">From</label>
+<select class="form-select" id="routeFrom">
+<option value="">Select starting point...</option>
+<option value="23.8740,90.3980">Uttara</option>
+<option value="23.8042,90.3683">Mirpur</option>
+<option value="23.7597,90.3746">Farmgate</option>
+<option value="23.7465,90.3762">Dhanmondi</option>
+<option value="23.7925,90.4072">Gulshan</option>
+<option value="23.7330,90.4178">Motijheel</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">To</label>
+<select class="form-select" id="routeTo">
+<option value="">Select destination...</option>
+<option value="23.8740,90.3980">Uttara</option>
+<option value="23.8042,90.3683">Mirpur</option>
+<option value="23.7597,90.3746">Farmgate</option>
+<option value="23.7465,90.3762">Dhanmondi</option>
+<option value="23.7925,90.4072">Gulshan</option>
+<option value="23.7330,90.4178">Motijheel</option>
+</select>
+</div>
+<button class="btn btn-accent btn-full" onclick="findSafeRoute()">
+<i class="fas fa-route"></i> Find Safe Route
+</button>
+</div>
+
+<div id="routeResults"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="tab-panel" id="view-history">
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:var(--accent-bg);color:var(--accent)"><i class="fas fa-history"></i></div>
+My Submitted Reports
+</div>
+<p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:12px">Track the status of all reports you've submitted. You can mark reports as resolved when you see the issue has been fixed.</p>
+</div>
+
+<div class="filter-row">
+<span class="chip active" onclick="filterMyReports('all',this)">All</span>
+<span class="chip" onclick="filterMyReports('waterlogging',this)">Waterlogging</span>
+<span class="chip" onclick="filterMyReports('dengue',this)">Dengue</span>
+<span class="chip" onclick="filterMyReports('garbage',this)">Garbage</span>
+</div>
+<div id="myReportsList"></div>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="tab-panel" id="view-leaderboard">
+<div class="tip-card">
+<h4><i class="fas fa-trophy"></i> Community Leaderboard</h4>
+<p>Top contributors who are making Dhaka cleaner and safer. Earn points by submitting reports, verifying others' reports, and helping resolve issues.</p>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(251,188,4,0.15);color:#b8860b"><i class="fas fa-medal"></i></div>
+Top Contributors
+</div>
+<div id="userLeaderboard"></div>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(52,168,83,0.1);color:var(--success)"><i class="fas fa-school"></i></div>
+School Leaderboard
+</div>
+<div id="schoolLeaderboard"></div>
+</div>
+</div>
+
+<!-- PROFILE -->
+<div class="tab-panel" id="view-profile">
+<div class="card">
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-light));display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;font-weight:700" id="profileAvatar">U</div>
+<div style="flex:1">
+<h2 style="font-size:1.3rem;margin-bottom:4px" id="profileName">User Name</h2>
+<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px" id="profileEmail">user@example.com</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap" id="profileBadges"></div>
+</div>
+</div>
+
+<div class="profile-stats">
+<div class="profile-stat">
+<div class="profile-stat-value" id="profileReports">0</div>
+<div class="profile-stat-label">Reports</div>
+</div>
+<div class="profile-stat">
+<div class="profile-stat-value" id="profileVerifications">0</div>
+<div class="profile-stat-label">Verifications</div>
+</div>
+<div class="profile-stat">
+<div class="profile-stat-value" id="profilePoints">0</div>
+<div class="profile-stat-label">Points</div>
+</div>
+</div>
+
+<div style="display:flex;gap:8px">
+<button class="btn btn-outline" onclick="showEditProfileModal()" style="flex:1"><i class="fas fa-edit"></i> Edit Profile</button>
+<button class="btn btn-danger" onclick="logout()" style="flex:1"><i class="fas fa-sign-out-alt"></i> Logout</button>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-history"></i></div>
+My Activity Log
+</div>
+<div id="activityLog"></div>
+</div>
+</div>
+
+<!-- EDUCATION -->
+<div class="tab-panel" id="view-education">
+<div class="tip-card" style="background:linear-gradient(135deg,#4285f4,#1a73e8)">
+<h4><i class="fas fa-water"></i> About Waterlogging in Dhaka</h4>
+<p>Dhaka experiences severe waterlogging during monsoon (June–October). Poor drainage, filled canals, and unplanned urbanization contribute to the problem. Reporting helps authorities prioritize areas for improvement.</p>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(234,67,53,0.1);color:var(--danger)"><i class="fas fa-mosquito"></i></div>
+Dengue Prevention Tips
+</div>
+<ul style="font-size:0.8rem;color:var(--text-secondary);list-style:none;display:flex;flex-direction:column;gap:8px">
+<li>✅ Remove standing water from containers weekly</li>
+<li>✅ Cover water storage tanks and drums</li>
+<li>✅ Clear blocked drains near your home</li>
+<li>✅ Dispose of unused tires that collect rainwater</li>
+<li>✅ Use mosquito nets and repellents</li>
+<li>✅ Report breeding sites using this app</li>
+<li>✅ Wear long-sleeved clothes during dawn/dusk</li>
+<li>✅ Clean flower vases and pet bowls regularly</li>
+</ul>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(251,188,4,0.15);color:#b8860b"><i class="fas fa-recycle"></i></div>
+Waste Management
+</div>
+<ul style="font-size:0.8rem;color:var(--text-secondary);list-style:none;display:flex;flex-direction:column;gap:8px">
+<li>✅ Separate wet and dry waste at home</li>
+<li>✅ Never dump garbage in drains or canals</li>
+<li>✅ Report illegal dumping spots</li>
+<li>✅ Participate in community clean-up drives</li>
+<li>✅ Recycle plastic, paper, and glass</li>
+<li>✅ Compost organic waste if possible</li>
+<li>✅ Dispose of medical waste properly</li>
+</ul>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(52,168,83,0.1);color:var(--success)"><i class="fas fa-hand-holding-water"></i></div>
+During Floods
+</div>
+<ul style="font-size:0.8rem;color:var(--text-secondary);list-style:none;display:flex;flex-direction:column;gap:8px">
+<li>⚠️ Avoid walking through floodwater (risk of electrocution, disease)</li>
+<li>⚠️ Do not drink contaminated water</li>
+<li>⚠️ Keep emergency numbers handy</li>
+<li>⚠️ Store dry food and clean water</li>
+<li>⚠️ Report dangerous areas to help others</li>
+<li>⚠️ Watch for open manholes under water</li>
+</ul>
+</div>
+</div>
+
+<!-- EMERGENCY -->
+<div class="tab-panel" id="view-emergency">
+<div class="card" style="border-color:var(--danger);background:rgba(234,67,53,0.03)">
+<div class="card-title">
+<div class="icon" style="background:rgba(234,67,53,0.1);color:var(--danger)"><i class="fas fa-phone-alt"></i></div>
+Emergency Contacts (Bangladesh)
+</div>
+<div class="emergency-list">
+<div class="emergency-item">
+<div class="em-icon" style="background:rgba(234,67,53,0.1);color:var(--danger)"><i class="fas fa-ambulance"></i></div>
+<div class="em-info">
+<div class="em-name">National Emergency Helpline</div>
+<div class="em-number">999 (Free • 24/7)</div>
+</div>
+<a href="tel:999" class="em-call">Call</a>
+</div>
+<div class="emergency-item">
+<div class="em-icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-fire-extinguisher"></i></div>
+<div class="em-info">
+<div class="em-name">Fire Service & Civil Defence</div>
+<div class="em-number">199</div>
+</div>
+<a href="tel:199" class="em-call">Call</a>
+</div>
+<div class="emergency-item">
+<div class="em-icon" style="background:rgba(52,168,83,0.1);color:var(--success)"><i class="fas fa-shield-alt"></i></div>
+<div class="em-info">
+<div class="em-name">Police Emergency</div>
+<div class="em-number">999</div>
+</div>
+<a href="tel:999" class="em-call">Call</a>
+</div>
+<div class="emergency-item">
+<div class="em-icon" style="background:rgba(251,188,4,0.15);color:#b8860b"><i class="fas fa-hospital"></i></div>
+<div class="em-info">
+<div class="em-name">DGHS Dengue Helpline</div>
+<div class="em-number">10655</div>
+</div>
+<a href="tel:10655" class="em-call">Call</a>
+</div>
+<div class="emergency-item">
+<div class="em-icon" style="background:rgba(156,39,176,0.1);color:#9c27b0"><i class="fas fa-city"></i></div>
+<div class="em-info">
+<div class="em-name">Dhaka North City Corporation</div>
+<div class="em-number">09611-000011</div>
+</div>
+<a href="tel:09611000011" class="em-call">Call</a>
+</div>
+<div class="emergency-item">
+<div class="em-icon" style="background:rgba(0,106,78,0.1);color:var(--accent)"><i class="fas fa-city"></i></div>
+<div class="em-info">
+<div class="em-name">Dhaka South City Corporation</div>
+<div class="em-number">09611-000022</div>
+</div>
+<a href="tel:09611000022" class="em-call">Call</a>
+</div>
+<div class="emergency-item">
+<div class="em-icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-first-aid"></i></div>
+<div class="em-info">
+<div class="em-name">Red Crescent helpline</div>
+<div class="em-number">16428</div>
+</div>
+<a href="tel:16428" class="em-call">Call</a>
+</div>
+</div>
+</div>
+
+<div class="tip-card" style="background:linear-gradient(135deg,var(--danger),#b71c1c)">
+<h4><i class="fas fa-exclamation-triangle"></i> In Case of Emergency</h4>
+<p>If you or someone nearby is in danger due to flooding, dengue outbreak, or hazardous waste — call <strong>999</strong> immediately. This is the national unified emergency number for all services.</p>
+</div>
+</div>
+
+<!-- ABOUT -->
+<div class="tab-panel" id="view-about">
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:var(--accent-bg);color:var(--accent)"><i class="fas fa-leaf"></i></div>
+About CleanBD
+</div>
+<p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.7;margin-bottom:12px">
+CleanBD is a community-powered environmental reporting platform designed for the citizens of Dhaka, Bangladesh. Our mission is to empower people to report environmental hazards — waterlogging, dengue breeding sites, and illegal garbage dumps — so that communities stay informed and authorities can take action.
+</p>
+<p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.7">
+All reports are stored locally in your browser. No personal data is collected. This is an open community tool for a cleaner, safer Bangladesh.
+</p>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(66,133,244,0.1);color:var(--info)"><i class="fas fa-database"></i></div>
+Your Data
+</div>
+<p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:12px">
+Reports are saved in your browser's local storage. You can export or clear them anytime.
+</p>
+<div style="display:flex;gap:8px">
+<button class="btn btn-outline" onclick="exportData()" style="flex:1"><i class="fas fa-download"></i> Export</button>
+<button class="btn btn-outline" onclick="clearAllData()" style="flex:1;border-color:var(--danger);color:var(--danger)"><i class="fas fa-trash"></i> Clear All</button>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">
+<div class="icon" style="background:rgba(52,168,83,0.1);color:var(--success)"><i class="fas fa-hands-helping"></i></div>
+How to Help
+</div>
+<ul style="font-size:0.8rem;color:var(--text-secondary);list-style:none;display:flex;flex-direction:column;gap:8px">
+<li>📸 Report hazards you see in your area</li>
+<li>✅ Verify reports from other users</li>
+<li>🟢 Mark issues as resolved when fixed</li>
+<li>💬 Comment on reports with updates</li>
+<li>📢 Share this tool with friends and classmates</li>
+<li>🧹 Organize community clean-up events</li>
+<li>📊 Use dashboard data to advocate for change</li>
+</ul>
+</div>
+</div>
+
+</div>
+
+<!-- MAP -->
+<div class="map-wrapper">
+<div id="map"></div>
+
+<div class="map-floating">
+<button class="map-fab" onclick="locateMe()" title="My Location"><i class="fas fa-crosshairs"></i></button>
+<button class="map-fab" onclick="resetMapView()" title="Reset View"><i class="fas fa-expand"></i></button>
+<button class="map-fab active" id="layerWaterBtn" onclick="toggleMapLayer('water')" title="Waterlogging"><i class="fas fa-water"></i></button>
+<button class="map-fab active" id="layerDengueBtn" onclick="toggleMapLayer('dengue')" title="Dengue"><i class="fas fa-bug"></i></button>
+<button class="map-fab active" id="layerGarbageBtn" onclick="toggleMapLayer('garbage')" title="Garbage"><i class="fas fa-trash"></i></button>
+</div>
+
+<div class="map-legend">
+<div class="legend-title">Map Legend</div>
+<div class="legend-items">
+<div class="legend-item"><div class="legend-dot" style="background:#4285f4"></div> Waterlogging</div>
+<div class="legend-item"><div class="legend-dot" style="background:#ea4335"></div> Dengue Hazard</div>
+<div class="legend-item"><div class="legend-dot" style="background:#fbbc04"></div> Garbage Dump</div>
+<div class="legend-item"><div class="legend-dot" style="background:#34a853"></div> Resolved</div>
+</div>
+</div>
+
+<div class="notif-panel" id="notifPanel">
+<h4>Notifications</h4>
+<div id="notifList"><div class="empty-state" style="padding:20px"><p>No notifications yet</p></div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Report Detail Modal -->
+<div class="modal-backdrop" id="detailModal">
+<div class="modal-box">
+<div class="modal-head">
+<h2 id="detailTitle">Report Details</h2>
+<button class="modal-close-btn" onclick="closeModal('detailModal')"><i class="fas fa-times"></i></button>
+</div>
+<div id="detailContent"></div>
+</div>
+</div>
+
+<!-- Login Modal -->
+<div class="modal-backdrop" id="loginModal">
+<div class="modal-box" style="max-width:500px">
+<div class="modal-head">
+<h2>Login to CleanBD</h2>
+<button class="modal-close-btn" onclick="closeModal('loginModal')"><i class="fas fa-times"></i></button>
+</div>
+<div class="form-group">
+<label class="form-label">Username</label>
+<input type="text" class="form-input" id="loginUsername" placeholder="Enter your username">
+</div>
+<div class="form-group">
+<label class="form-label">Password</label>
+<input type="password" class="form-input" id="loginPassword" placeholder="Enter your password">
+</div>
+<button class="btn btn-accent btn-full" onclick="handleLogin()" style="margin-bottom:12px">
+<i class="fas fa-sign-in-alt"></i> Login
+</button>
+<p style="text-align:center;font-size:0.8rem;color:var(--text-muted)">
+Don't have an account? <a onclick="showRegisterModal()" style="color:var(--accent);cursor:pointer;font-weight:600">Register here</a>
+</p>
+</div>
+</div>
+
+<!-- Register Modal -->
+<div class="modal-backdrop" id="registerModal">
+<div class="modal-box" style="max-width:500px">
+<div class="modal-head">
+<h2>Join CleanBD</h2>
+<button class="modal-close-btn" onclick="closeModal('registerModal')"><i class="fas fa-times"></i></button>
+</div>
+<div class="form-group">
+<label class="form-label">Username <span class="req">*</span></label>
+<input type="text" class="form-input" id="regUsername" placeholder="Choose a username">
+</div>
+<div class="form-group">
+<label class="form-label">Email <span class="req">*</span></label>
+<input type="email" class="form-input" id="regEmail" placeholder="your@email.com">
+</div>
+<div class="form-group">
+<label class="form-label">Password <span class="req">*</span></label>
+<input type="password" class="form-input" id="regPassword" placeholder="Create a password">
+</div>
+<div class="form-group">
+<label class="form-label">School/Institution (Optional)</label>
+<input type="text" class="form-input" id="regSchool" placeholder="e.g., Notre Dame College">
+</div>
+<button class="btn btn-accent btn-full" onclick="handleRegister()">
+<i class="fas fa-user-plus"></i> Create Account
+</button>
+</div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal-backdrop" id="editProfileModal">
+<div class="modal-box" style="max-width:500px">
+<div class="modal-head">
+<h2>Edit Profile</h2>
+<button class="modal-close-btn" onclick="closeModal('editProfileModal')"><i class="fas fa-times"></i></button>
+</div>
+<div class="form-group">
+<label class="form-label">Username</label>
+<input type="text" class="form-input" id="editUsername" readonly style="background:var(--bg-tertiary)">
+</div>
+<div class="form-group">
+<label class="form-label">Email</label>
+<input type="email" class="form-input" id="editEmail" readonly style="background:var(--bg-tertiary)">
+</div>
+<div class="form-group">
+<label class="form-label">School/Institution</label>
+<input type="text" class="form-input" id="editSchool" placeholder="e.g., Notre Dame College">
+</div>
+<button class="btn btn-accent btn-full" onclick="saveProfile()">
+<i class="fas fa-save"></i> Save Changes
+</button>
+</div>
+</div>
+
+<!-- SOS Modal -->
+<div class="modal-backdrop" id="sosModal">
+<div class="modal-box" style="max-width:500px">
+<div class="modal-head">
+<h2>🚨 Emergency SOS</h2>
+<button class="modal-close-btn" onclick="closeModal('sosModal')"><i class="fas fa-times"></i></button>
+</div>
+<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px">If you're in immediate danger, call the national emergency number:</p>
+<div style="text-align:center;margin-bottom:20px">
+<a href="tel:999" style="display:inline-block;padding:16px 40px;background:var(--danger);color:white;border-radius:12px;font-size:1.5rem;font-weight:700;text-decoration:none">
+<i class="fas fa-phone-alt"></i> 999
+</a>
+<p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px">National Emergency Helpline (Free • 24/7)</p>
+</div>
+<div class="emergency-list">
+<div class="emergency-item">
+<div class="em-icon" style="background:rgba(234,67,53,0.1);color:var(--danger)"><i class="fas fa-ambulance"></i></div>
+<div class="em-info"><div class="em-name">Ambulance</div><div class="em-number">199</div></div>
+<a href="tel:199" class="em-call">Call</a>
+</div>
+<div class="emergency-item">
+<div class="em-icon" style="background:rgba(251,188,4,0.15);color:#b8860b"><i class="fas fa-hospital"></i></div>
+<div class="em-info"><div class="em-name">Dengue Helpline</div><div class="em-number">10655</div></div>
+<a href="tel:10655" class="em-call">Call</a>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+// ============ STATE ============
+let reports = JSON.parse(localStorage.getItem('cleanbd_reports') || '[]');
+let users = JSON.parse(localStorage.getItem('cleanbd_users') || '[]');
+let currentUser = JSON.parse(localStorage.getItem('cleanbd_currentUser') || 'null');
+let selections = {};
+let customLatLng = null;
+let tempMarker = null;
+let photoData = { wl: [], dg: [], gb: [] };
+let currentFilters = { waterlogging: 'all', dengue: 'all', garbage: 'all', my: 'all' };
+let notifications = JSON.parse(localStorage.getItem('cleanbd_notifs') || '[]');
+
+// ============ MAP INIT ============
+const map = L.map('map', { zoomControl: false }).setView([23.8103, 90.4125], 12);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+L.control.scale({ imperial: false }).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap | CleanBD', maxZoom: 19
+}).addTo(map);
+
+const layers = {
+    water: L.layerGroup().addTo(map),
+    dengue: L.layerGroup().addTo(map),
+    garbage: L.layerGroup().addTo(map)
+};
+
+// ============ ICONS ============
+function makeIcon(color, emoji) {
+    return L.divIcon({
+        html: `<div style="background:${color};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid white">${emoji}</div>`,
+        className: '', iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -18]
+    });
+}
+const icons = {
+    water: makeIcon('#4285f4', '🌊'),
+    dengue: makeIcon('#ea4335', '🦟'),
+    garbage: makeIcon('#fbbc04', '🗑️'),
+    resolved: makeIcon('#34a853', '✅')
+};
+
+// ============ MAP CLICK ============
+map.on('click', function(e) {
+    customLatLng = e.latlng;
+    if (tempMarker) map.removeLayer(tempMarker);
+    tempMarker = L.marker(e.latlng, { icon: makeIcon('#9c27b0', '📍') }).addTo(map)
+        .bindPopup(`<div class="custom-popup"><h4>📍 Selected Location</h4><p>Lat: ${e.latlng.lat.toFixed(5)}, Lng: ${e.latlng.lng.toFixed(5)}</p><p style="font-size:0.7rem;color:#999;margin-top:6px">Select "Custom" in the dropdown to use this location</p></div>`).openPopup();
+});
+
+// ============ AUTHENTICATION ============
+function showLoginModal() {
+    document.getElementById('loginModal').classList.add('show');
+}
+
+function showRegisterModal() {
+    closeModal('loginModal');
+    document.getElementById('registerModal').classList.add('show');
+}
+
+function handleLogin() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    
+    if (!username || !password) {
+        return showToast('Please fill in all fields', 'error');
+    }
+    
+    const user = users.find(u => u.username === username && u.password === password);
+    if (!user) {
+        return showToast('Invalid username or password', 'error');
+    }
+    
+    currentUser = user;
+    localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser));
+    closeModal('loginModal');
+    updateUserUI();
+    showToast(`Welcome back, ${user.username}!`, 'success');
+}
+
+function handleRegister() {
+    const username = document.getElementById('regUsername').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const school = document.getElementById('regSchool').value.trim();
+    
+    if (!username || !email || !password) {
+        return showToast('Please fill in required fields', 'error');
+    }
+    
+    if (users.find(u => u.username === username)) {
+        return showToast('Username already exists', 'error');
+    }
+    
+    if (users.find(u => u.email === email)) {
+        return showToast('Email already registered', 'error');
+    }
+    
+    const newUser = {
+        id: Date.now(),
+        username,
+        email,
+        password,
+        schoolName: school || null,
+        reputationPoints: 0,
+        profilePhotoURL: null,
+        createdAt: new Date().toISOString()
+    };
+    
+    users.push(newUser);
+    localStorage.setItem('cleanbd_users', JSON.stringify(users));
+    
+    currentUser = newUser;
+    localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser));
+    
+    closeModal('registerModal');
+    updateUserUI();
+    showToast('Account created successfully! Welcome to CleanBD!', 'success');
+}
+
+function logout() {
+    currentUser = null;
+    localStorage.removeItem('cleanbd_currentUser');
+    updateUserUI();
+    switchView('waterlogging');
+    showToast('Logged out successfully', 'info');
+}
+
+function updateUserUI() {
+    const loginBtn = document.getElementById('loginBtn');
+    const profileBtn = document.getElementById('userProfileBtn');
+    
+    if (currentUser) {
+        loginBtn.style.display = 'none';
+        profileBtn.style.display = 'flex';
+        document.getElementById('userName').textContent = currentUser.username;
+        document.getElementById('userPoints').textContent = currentUser.reputationPoints + ' pts';
+        document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+    } else {
+        loginBtn.style.display = 'inline-flex';
+        profileBtn.style.display = 'none';
+    }
+}
+
+function showEditProfileModal() {
+    if (!currentUser) return;
+    document.getElementById('editUsername').value = currentUser.username;
+    document.getElementById('editEmail').value = currentUser.email;
+    document.getElementById('editSchool').value = currentUser.schoolName || '';
+    document.getElementById('editProfileModal').classList.add('show');
+}
+
+function saveProfile() {
+    const school = document.getElementById('editSchool').value.trim();
+    currentUser.schoolName = school || null;
+    
+    const userIndex = users.findIndex(u => u.id === currentUser.id);
+    if (userIndex !== -1) {
+        users[userIndex] = currentUser;
+        localStorage.setItem('cleanbd_users', JSON.stringify(users));
+        localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser));
+    }
+    
+    closeModal('editProfileModal');
+    updateProfileView();
+    showToast('Profile updated successfully', 'success');
+}
+
+// ============ NAVIGATION ============
+function switchView(view) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const navBtn = document.querySelector(`[data-view="${view}"]`);
+    if (navBtn) navBtn.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById(`view-${view}`);
+    if (panel) panel.classList.add('active');
+
+    const titles = {
+        'waterlogging': ['Waterlogging Reporter', 'Report flooded roads and waterlogged areas'],
+        'dengue': ['DengueWatch BD', 'Report mosquito breeding sites and hazards'],
+        'garbage': ['Garbage Spotter', 'Report illegal dumping and waste accumulation'],
+        'dashboard': ['Dashboard', 'Overview of all community reports'],
+        'map-view': ['Full Map View', 'Explore all reports on the map'],
+        'routes': ['Safe Routes', 'Find safe paths based on current conditions'],
+        'history': ['My Reports', 'Track your submitted reports'],
+        'leaderboard': ['Leaderboard', 'Top contributors and schools'],
+        'profile': ['My Profile', 'View and edit your profile'],
+        'education': ['Learn & Tips', 'Prevention tips and educational resources'],
+        'emergency': ['Emergency Contacts', 'Important numbers for emergencies'],
+        'about': ['About CleanBD', 'Learn about this platform']
+    };
+    if (titles[view]) {
+        document.getElementById('pageTitle').textContent = titles[view][0];
+        document.getElementById('pageSubtitle').textContent = titles[view][1];
+    }
+    if (view === 'dashboard') updateDashboard();
+    if (view === 'history') renderMyReports();
+    if (view === 'leaderboard') updateLeaderboard();
+    if (view === 'profile') updateProfileView();
+}
+
+// ============ SELECTIONS ============
+function selectOption(group, value, el) {
+    el.parentElement.querySelectorAll('.selection-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selections[group] = value;
+}
+
+// ============ PHOTO HANDLING ============
+function handlePhotos(input, containerId, maxCount, type) {
+    const container = document.getElementById(containerId);
+    const key = type || containerId.split('Preview')[0];
+    
+    if (input.files) {
+        Array.from(input.files).forEach((file, i) => {
+            if (photoData[key].length >= maxCount) {
+                showToast(`Maximum ${maxCount} photos allowed`, 'error');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('File too large. Max 5MB.', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                photoData[key].push(e.target.result);
+                renderPhotoPreview(key, containerId);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+}
+
+function renderPhotoPreview(key, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = photoData[key].map((src, idx) => `
+        <div class="preview-thumb">
+            <img src="${src}" alt="Preview">
+            <button class="remove-photo" onclick="removePhoto('${key}',${idx},'${containerId}')"><i class="fas fa-times"></i></button>
+        </div>
+    `).join('');
+}
+
+function removePhoto(key, idx, containerId) {
+    photoData[key].splice(idx, 1);
+    renderPhotoPreview(key, containerId);
+}
+
+// ============ SUBMIT REPORT ============
+function submitReport(type) {
+    if (!currentUser) {
+        showToast('Please login to submit a report', 'error');
+        showLoginModal();
+        return;
+    }
+    
+    const reportId = 'CB-' + String(Date.now()).slice(-6);
+    let report = {
+        id: Date.now(),
+        reportId: reportId,
+        type: type,
+        timestamp: new Date().toISOString(),
+        status: 'new',
+        reporterId: currentUser.id,
+        reporterName: currentUser.username,
+        verifications: 0,
+        verifiedBy: [],
+        comments: [],
+        photos: [],
+        history: [{ status: 'new', timestamp: new Date().toISOString(), note: 'Report submitted' }]
+    };
+
+    if (type === 'waterlogging') {
+        const loc = document.getElementById('wlLocation').value;
+        const street = document.getElementById('wlStreet').value.trim();
+        const notes = document.getElementById('wlNotes').value.trim();
+        if (!loc) return showToast('Please select a location', 'error');
+        if (!street) return showToast('Please enter street name', 'error');
+        if (!selections.wlDepth) return showToast('Please select water depth', 'error');
+        if (!document.getElementById('wlAreaType').value) return showToast('Please select area type', 'error');
+        if (!notes) return showToast('Please add a description', 'error');
+
+        if (loc === 'custom') {
+            if (!customLatLng) return showToast('Click on map to select location', 'error');
+            report.lat = customLatLng.lat;
+            report.lng = customLatLng.lng;
+            report.locationName = 'Custom Location';
+        } else {
+            const [lat, lng] = loc.split(',').map(Number);
+            report.lat = lat; report.lng = lng;
+            report.locationName = document.getElementById('wlLocation').options[document.getElementById('wlLocation').selectedIndex].text;
+        }
+        report.street = street;
+        report.depth = selections.wlDepth;
+        report.condition = selections.wlCondition || 'unknown';
+        report.areaType = document.getElementById('wlAreaType').value;
+        report.traffic = selections.wlTraffic || 'unknown';
+        report.duration = document.getElementById('wlDuration').value;
+        report.priority = document.getElementById('wlPriority').value;
+        report.landmark = document.getElementById('wlLandmark').value;
+        report.notes = notes;
+        report.photos = photoData.wl.slice();
+
+    } else if (type === 'dengue') {
+        const loc = document.getElementById('dgLocation').value;
+        const hazardType = document.getElementById('dgType').value;
+        const address = document.getElementById('dgAddress').value.trim();
+        const notes = document.getElementById('dgNotes').value.trim();
+        if (!hazardType) return showToast('Please select hazard type', 'error');
+        if (!loc) return showToast('Please select a location', 'error');
+        if (!address) return showToast('Please enter specific address', 'error');
+        if (!selections.dgRisk) return showToast('Please select risk level', 'error');
+        if (!notes) return showToast('Please add a description', 'error');
+
+        if (loc === 'custom') {
+            if (!customLatLng) return showToast('Click on map to select location', 'error');
+            report.lat = customLatLng.lat; report.lng = customLatLng.lng;
+            report.locationName = 'Custom Location';
+        } else {
+            const [lat, lng] = loc.split(',').map(Number);
+            report.lat = lat; report.lng = lng;
+            report.locationName = document.getElementById('dgLocation').options[document.getElementById('dgLocation').selectedIndex].text;
+        }
+        report.hazardType = hazardType;
+        report.address = address;
+        report.property = document.getElementById('dgProperty').value;
+        report.size = selections.dgSize || 'unknown';
+        report.risk = selections.dgRisk;
+        report.proximity = Array.from(document.querySelectorAll('.dg-proximity:checked')).map(c => c.value);
+        report.cases = document.getElementById('dgCases').value;
+        report.priority = document.getElementById('dgPriority').value;
+        report.notes = notes;
+        report.photos = photoData.dg.slice();
+
+    } else if (type === 'garbage') {
+        const loc = document.getElementById('gbLocation').value;
+        const spot = document.getElementById('gbSpot').value.trim();
+        const wasteType = document.getElementById('gbType').value;
+        const notes = document.getElementById('gbNotes').value.trim();
+        if (!loc) return showToast('Please select a location', 'error');
+        if (!spot) return showToast('Please describe the exact spot', 'error');
+        if (!wasteType) return showToast('Please select waste type', 'error');
+        if (!selections.gbAmount) return showToast('Please select amount', 'error');
+        if (!notes) return showToast('Please add a description', 'error');
+
+        if (loc === 'custom') {
+            if (!customLatLng) return showToast('Click on map to select location', 'error');
+            report.lat = customLatLng.lat; report.lng = customLatLng.lng;
+            report.locationName = 'Custom Location';
+        } else {
+            const [lat, lng] = loc.split(',').map(Number);
+            report.lat = lat; report.lng = lng;
+            report.locationName = document.getElementById('gbLocation').options[document.getElementById('gbLocation').selectedIndex].text;
+        }
+        report.spot = spot;
+        report.wasteType = wasteType;
+        report.amount = selections.gbAmount;
+        report.smell = selections.gbSmell || 'unknown';
+        report.duration = document.getElementById('gbDuration').value;
+        report.concerns = Array.from(document.querySelectorAll('.gb-concern:checked')).map(c => c.value);
+        report.priority = document.getElementById('gbPriority').value;
+        report.notes = notes;
+        report.photos = photoData.gb.slice();
+    }
+
+    reports.unshift(report);
+    saveReports();
+    
+    currentUser.reputationPoints += 10;
+    const userIndex = users.findIndex(u => u.id === currentUser.id);
+    if (userIndex !== -1) {
+        users[userIndex] = currentUser;
+        localStorage.setItem('cleanbd_users', JSON.stringify(users));
+        localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser));
+    }
+    
+    addMarkerToMap(report);
+    refreshReportLists();
+    updateBadges();
+    addNotification(report);
+    updateUserUI();
+    showToast(`Report ${reportId} submitted successfully! +10 points`, 'success');
+    resetForm(type);
+}
+
+function resetForm(type) {
+    if (type === 'waterlogging') {
+        ['wlLocation','wlStreet','wlAreaType','wlDuration','wlPriority','wlLandmark','wlNotes'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el.tagName === 'SELECT') el.selectedIndex = 0;
+            else el.value = '';
+        });
+        document.getElementById('wlPreviewContainer').innerHTML = '';
+        document.querySelectorAll('#view-waterlogging .selection-card').forEach(c => c.classList.remove('selected'));
+        photoData.wl = [];
+        ['wlDepth','wlCondition','wlTraffic'].forEach(k => delete selections[k]);
+    } else if (type === 'dengue') {
+        ['dgType','dgLocation','dgAddress','dgProperty','dgCases','dgPriority','dgNotes'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el.tagName === 'SELECT') el.selectedIndex = 0;
+            else el.value = '';
+        });
+        document.getElementById('dgPreviewContainer').innerHTML = '';
+        document.querySelectorAll('#view-dengue .selection-card').forEach(c => c.classList.remove('selected'));
+        document.querySelectorAll('.dg-proximity').forEach(c => c.checked = false);
+        photoData.dg = [];
+        ['dgRisk','dgSize'].forEach(k => delete selections[k]);
+    } else if (type === 'garbage') {
+        ['gbLocation','gbSpot','gbType','gbDuration','gbPriority','gbNotes'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el.tagName === 'SELECT') el.selectedIndex = 0;
+            else el.value = '';
+        });
+        document.getElementById('gbPreviewContainer').innerHTML = '';
+        document.querySelectorAll('#view-garbage .selection-card').forEach(c => c.classList.remove('selected'));
+        document.querySelectorAll('.gb-concern').forEach(c => c.checked = false);
+        photoData.gb = [];
+        ['gbAmount','gbSmell'].forEach(k => delete selections[k]);
+    }
+}
+
+// ============ MAP MARKERS ============
+function addMarkerToMap(report) {
+    const layerKey = report.type === 'waterlogging' ? 'water' : report.type === 'dengue' ? 'dengue' : 'garbage';
+    const icon = report.status === 'resolved' ? icons.resolved : icons[layerKey];
+
+    let popupHtml = `<div class="custom-popup"><h4>`;
+    if (report.type === 'waterlogging') popupHtml += `🌊 Waterlogging`;
+    else if (report.type === 'dengue') popupHtml += `🦟 Dengue Hazard`;
+    else popupHtml += `🗑️ Garbage Dump`;
+    popupHtml += `</h4>`;
+    popupHtml += `<p><strong>ID:</strong> ${report.reportId}</p>`;
+    popupHtml += `<p><strong>Location:</strong> ${report.locationName}</p>`;
+    popupHtml += `<p><strong>Status:</strong> ${report.status}</p>`;
+    popupHtml += `<p style="font-size:0.65rem;color:#999">${timeAgo(report.timestamp)}</p>`;
+    popupHtml += `</div>`;
+
+    const marker = L.marker([report.lat, report.lng], { icon })
+        .bindPopup(popupHtml).addTo(layers[layerKey]);
+    marker.reportId = report.id;
+
+    if (report.type === 'waterlogging') {
+        const radius = report.depth === 'waist' ? 200 : report.depth === 'knee' ? 120 : 60;
+        L.circle([report.lat, report.lng], {
+            color: '#4285f4', fillColor: '#4285f4', fillOpacity: 0.1, weight: 1.5, radius
+        }).addTo(layers.water);
+    } else if (report.type === 'dengue') {
+        const color = report.risk === 'high' ? '#ea4335' : report.risk === 'moderate' ? '#fbbc04' : '#34a853';
+        const radius = report.risk === 'high' ? 250 : report.risk === 'moderate' ? 150 : 80;
+        L.circle([report.lat, report.lng], {
+            color, fillColor: color, fillOpacity: 0.08, weight: 1.5, radius
+        }).addTo(layers.dengue);
+    }
+}
+
+function renderAllMarkers() {
+    Object.values(layers).forEach(l => l.clearLayers());
+    reports.forEach(r => addMarkerToMap(r));
+}
+
+// ============ REPORT LISTS ============
+function refreshReportLists() {
+    renderList('waterlogging', 'wlReportsList', currentFilters.waterlogging);
+    renderList('dengue', 'dgReportsList', currentFilters.dengue);
+    renderList('garbage', 'gbReportsList', currentFilters.garbage);
+}
+
+function filterReports(type, status, el) {
+    currentFilters[type] = status;
+    el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    renderList(type, type === 'waterlogging' ? 'wlReportsList' : type === 'dengue' ? 'dgReportsList' : 'gbReportsList', status);
+}
+
+function renderList(type, containerId, status) {
+    const container = document.getElementById(containerId);
+    let filtered = reports.filter(r => r.type === type);
+    if (status && status !== 'all') filtered = filtered.filter(r => r.status === status);
+    filtered = filtered.slice(0, 15);
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h4>No reports yet</h4><p>Be the first to report in this category!</p></div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(r => {
+        const emoji = type === 'waterlogging' ? '🌊' : type === 'dengue' ? '🦟' : '🗑️';
+        let detail = '';
+        if (type === 'waterlogging') detail = `Depth: ${r.depth} • ${r.street || ''}`;
+        else if (type === 'dengue') detail = `${r.hazardType.replace(/_/g,' ')} • Risk: ${r.risk}`;
+        else detail = `${r.wasteType} • ${r.amount}`;
+
+        return `
+        <div class="report-item fade-in" onclick="showReportDetail(${r.id})">
+            <div class="report-top">
+                <div>
+                    <div class="report-title">${emoji} ${r.locationName}</div>
+                    <div class="report-id">${r.reportId} • ${r.reporterName}</div>
+                </div>
+                <span class="status-pill status-${r.status}">${r.status}</span>
+            </div>
+            <div class="report-meta"><i class="fas fa-info-circle"></i> ${detail}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+                <div class="report-time">${timeAgo(r.timestamp)}</div>
+                <div style="display:flex;gap:4px">
+                    <span style="font-size:0.65rem;color:var(--text-muted)"><i class="fas fa-check-circle"></i> ${r.verifications}</span>
+                    <span style="font-size:0.65rem;color:var(--text-muted);margin-left:6px"><i class="fas fa-comment"></i> ${r.comments.length}</span>
+                    ${r.photos.length ? `<span style="font-size:0.65rem;color:var(--text-muted);margin-left:6px"><i class="fas fa-image"></i> ${r.photos.length}</span>` : ''}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ============ REPORT DETAIL MODAL ============
+function showReportDetail(id) {
+    const r = reports.find(x => x.id === id);
+    if (!r) return;
+
+    const emoji = r.type === 'waterlogging' ? '🌊' : r.type === 'dengue' ? '🦟' : '🗑️';
+    document.getElementById('detailTitle').innerHTML = `${emoji} Report ${r.reportId}`;
+
+    const statusOrder = ['new', 'review', 'progress', 'resolved'];
+    const currentIdx = statusOrder.indexOf(r.status);
+
+    let html = `
+    <div class="status-timeline">
+        ${statusOrder.map((s, i) => `
+            <div class="timeline-step ${i < currentIdx ? 'completed' : i === currentIdx ? 'current' : ''}">
+                <div class="timeline-dot">${i < currentIdx ? '✓' : i+1}</div>
+                <div class="timeline-label">${s === 'new' ? 'New' : s === 'review' ? 'Review' : s === 'progress' ? 'In Progress' : 'Resolved'}</div>
+            </div>
+        `).join('')}
+    </div>
+
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="detail-label">Report ID</div>
+            <div class="detail-value" style="font-family:monospace">${r.reportId}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Status</div>
+            <div class="detail-value"><span class="status-pill status-${r.status}">${r.status}</span></div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Location</div>
+            <div class="detail-value">${r.locationName}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Priority</div>
+            <div class="detail-value"><span class="badge-inline priority-${r.priority}">${r.priority}</span></div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Reported By</div>
+            <div class="detail-value">${r.reporterName}</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">Reported At</div>
+            <div class="detail-value">${new Date(r.timestamp).toLocaleString()}</div>
+        </div>
+    </div>`;
+
+    if (r.type === 'waterlogging') {
+        html += `
+        <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">Street</div><div class="detail-value">${r.street}</div></div>
+            <div class="detail-item"><div class="detail-label">Water Depth</div><div class="detail-value">${r.depth}</div></div>
+            <div class="detail-item"><div class="detail-label">Water Condition</div><div class="detail-value">${r.condition}</div></div>
+            <div class="detail-item"><div class="detail-label">Area Type</div><div class="detail-value">${r.areaType.replace(/_/g,' ')}</div></div>
+            <div class="detail-item"><div class="detail-label">Traffic Impact</div><div class="detail-value">${r.traffic}</div></div>
+            <div class="detail-item"><div class="detail-label">Duration</div><div class="detail-value">${r.duration || 'Unknown'}</div></div>
+        </div>
+        ${r.landmark ? `<div class="detail-item" style="margin-bottom:16px"><div class="detail-label">Nearby Landmark</div><div class="detail-value">${r.landmark}</div></div>` : ''}`;
+    } else if (r.type === 'dengue') {
+        html += `
+        <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">Hazard Type</div><div class="detail-value">${r.hazardType.replace(/_/g,' ')}</div></div>
+            <div class="detail-item"><div class="detail-label">Risk Level</div><div class="detail-value">${r.risk}</div></div>
+            <div class="detail-item"><div class="detail-label">Size</div><div class="detail-value">${r.size}</div></div>
+            <div class="detail-item"><div class="detail-label">Property Type</div><div class="detail-value">${r.property || 'Unknown'}</div></div>
+            <div class="detail-item"><div class="detail-label">Known Cases</div><div class="detail-value">${r.cases}</div></div>
+        </div>
+        <div class="detail-item" style="margin-bottom:16px"><div class="detail-label">Specific Address</div><div class="detail-value">${r.address}</div></div>
+        ${r.proximity && r.proximity.length ? `<div class="detail-item" style="margin-bottom:16px"><div class="detail-label">Proximity To</div><div class="detail-value">${r.proximity.join(', ')}</div></div>` : ''}`;
+    } else {
+        html += `
+        <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">Waste Type</div><div class="detail-value">${r.wasteType}</div></div>
+            <div class="detail-item"><div class="detail-label">Amount</div><div class="detail-value">${r.amount}</div></div>
+            <div class="detail-item"><div class="detail-label">Smell</div><div class="detail-value">${r.smell}</div></div>
+            <div class="detail-item"><div class="detail-label">Duration</div><div class="detail-value">${r.duration || 'Unknown'}</div></div>
+        </div>
+        <div class="detail-item" style="margin-bottom:16px"><div class="detail-label">Exact Spot</div><div class="detail-value">${r.spot}</div></div>
+        ${r.concerns && r.concerns.length ? `<div class="detail-item" style="margin-bottom:16px"><div class="detail-label">Concerns</div><div class="detail-value">${r.concerns.join(', ')}</div></div>` : ''}`;
+    }
+
+    html += `<div class="detail-item" style="margin-bottom:16px"><div class="detail-label">Description</div><div class="detail-value" style="line-height:1.6">${r.notes}</div></div>`;
+
+    if (r.photos && r.photos.length) {
+        html += `<div style="margin-bottom:16px"><div class="detail-label">Photos (${r.photos.length})</div><div class="photo-gallery">${r.photos.map(p => `<img src="${p}" alt="Report photo">`).join('')}</div></div>`;
+    }
+
+    html += `
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-outline" onclick="verifyReport(${r.id})"><i class="fas fa-check"></i> Verify (${r.verifications})</button>
+        ${r.status !== 'resolved' ? `<button class="btn btn-sm btn-success" onclick="markResolved(${r.id})"><i class="fas fa-check-circle"></i> Mark as Resolved</button>` : ''}
+        ${r.status === 'new' ? `<button class="btn btn-sm btn-outline" onclick="changeStatus(${r.id},'review')"><i class="fas fa-eye"></i> Mark Under Review</button>` : ''}
+        ${r.status === 'review' ? `<button class="btn btn-sm btn-outline" onclick="changeStatus(${r.id},'progress')"><i class="fas fa-tools"></i> Mark In Progress</button>` : ''}
+        <button class="btn btn-sm btn-outline" onclick="focusMarker(${r.lat},${r.lng});closeModal('detailModal')"><i class="fas fa-map-marker-alt"></i> View on Map</button>
+    </div>
+
+    <div class="comment-section">
+        <h4 style="font-size:0.9rem;margin-bottom:12px"><i class="fas fa-comments"></i> Comments (${r.comments.length})</h4>
+        <div class="comment-input">
+            <input type="text" id="commentInput_${r.id}" placeholder="Add a comment or update...">
+            <button class="btn btn-sm btn-accent" onclick="addComment(${r.id})">Post</button>
+        </div>
+        <div id="commentsList_${r.id}">
+            ${r.comments.map(c => `
+                <div class="comment-item">
+                    <div class="comment-author">${c.author}</div>
+                    <div class="comment-text">${c.text}</div>
+                    <div class="comment-time">${timeAgo(c.timestamp)}</div>
+                </div>
+            `).join('') || '<p style="font-size:0.8rem;color:var(--text-muted)">No comments yet. Be the first to add an update!</p>'}
+        </div>
+    </div>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <div class="detail-label">Status History</div>
+        ${r.history.map(h => `
+            <div style="padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm);margin-top:6px;font-size:0.8rem">
+                <strong>${h.status}</strong> — ${new Date(h.timestamp).toLocaleString()}<br>
+                <span style="color:var(--text-muted)">${h.note}</span>
+            </div>
+        `).join('')}
+    </div>`;
+
+    document.getElementById('detailContent').innerHTML = html;
+    document.getElementById('detailModal').classList.add('show');
+}
+
+// ============ ACTIONS ============
+function verifyReport(id) {
+    if (!currentUser) {
+        showToast('Please login to verify reports', 'error');
+        showLoginModal();
+        return;
+    }
+    
+    const r = reports.find(x => x.id === id);
+    if (!r) return;
+    
+    if (r.verifiedBy.includes(currentUser.id)) {
+        showToast('You already verified this report', 'info');
+        return;
+    }
+    
+    r.verifications++;
+    r.verifiedBy.push(currentUser.id);
+    
+    currentUser.reputationPoints += 2;
+    const userIndex = users.findIndex(u => u.id === currentUser.id);
+    if (userIndex !== -1) {
+        users[userIndex] = currentUser;
+        localStorage.setItem('cleanbd_users', JSON.stringify(users));
+        localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser));
+    }
+    
+    saveReports();
+    refreshReportLists();
+    showReportDetail(id);
+    updateUserUI();
+    showToast('Report verified! +2 points', 'success');
+}
+
+function markResolved(id) {
+    const r = reports.find(x => x.id === id);
+    if (!r) return;
+    r.status = 'resolved';
+    r.history.push({ status: 'resolved', timestamp: new Date().toISOString(), note: 'Marked as resolved by community member' });
+    
+    if (currentUser && r.reporterId === currentUser.id) {
+        currentUser.reputationPoints += 5;
+        const userIndex = users.findIndex(u => u.id === currentUser.id);
+        if (userIndex !== -1) {
+            users[userIndex] = currentUser;
+            localStorage.setItem('cleanbd_users', JSON.stringify(users));
+            localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser));
+            updateUserUI();
+        }
+    }
+    
+    saveReports();
+    renderAllMarkers();
+    refreshReportLists();
+    showReportDetail(id);
+    showToast('Report marked as resolved! Thank you.', 'success');
+    addNotification({ ...r, customMsg: `Report ${r.reportId} has been resolved` });
+}
+
+function changeStatus(id, newStatus) {
+    const r = reports.find(x => x.id === id);
+    if (!r) return;
+    r.status = newStatus;
+    r.history.push({ status: newStatus, timestamp: new Date().toISOString(), note: `Status updated to ${newStatus}` });
+    saveReports();
+    renderAllMarkers();
+    refreshReportLists();
+    showReportDetail(id);
+    showToast(`Status updated to ${newStatus}`, 'info');
+}
+
+function addComment(id) {
+    if (!currentUser) {
+        showToast('Please login to comment', 'error');
+        showLoginModal();
+        return;
+    }
+    
+    const input = document.getElementById(`commentInput_${id}`);
+    const text = input.value.trim();
+    if (!text) return;
+    const r = reports.find(x => x.id === id);
+    if (!r) return;
+    r.comments.push({
+        author: currentUser.username,
+        authorId: currentUser.id,
+        text: text,
+        timestamp: new Date().toISOString()
+    });
+    
+    currentUser.reputationPoints += 1;
+    const userIndex = users.findIndex(u => u.id === currentUser.id);
+    if (userIndex !== -1) {
+        users[userIndex] = currentUser;
+        localStorage.setItem('cleanbd_users', JSON.stringify(users));
+        localStorage.setItem('cleanbd_currentUser', JSON.stringify(currentUser));
+    }
+    
+    saveReports();
+    input.value = '';
+    showReportDetail(id);
+    updateUserUI();
+    showToast('Comment added! +1 point', 'success');
+}
+
+function focusMarker(lat, lng) {
+    map.setView([lat, lng], 16);
+}
+
+// ============ MY REPORTS ============
+function renderMyReports() {
+    const container = document.getElementById('myReportsList');
+    
+    if (!currentUser) {
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-sign-in-alt"></i><h4>Login Required</h4><p>Please login to view your reports</p><button class="btn btn-accent" onclick="showLoginModal()" style="margin-top:12px">Login Now</button></div>`;
+        return;
+    }
+    
+    let filtered = reports.filter(r => r.reporterId === currentUser.id);
+    if (currentFilters.my !== 'all') filtered = filtered.filter(r => r.type === currentFilters.my);
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h4>No reports yet</h4><p>Submit your first report to start tracking!</p></div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(r => {
+        const emoji = r.type === 'waterlogging' ? '🌊' : r.type === 'dengue' ? '🦟' : '🗑️';
+        return `
+        <div class="report-item fade-in" onclick="showReportDetail(${r.id})">
+            <div class="report-top">
+                <div>
+                    <div class="report-title">${emoji} ${r.locationName}</div>
+                    <div class="report-id">${r.reportId}</div>
+                </div>
+                <span class="status-pill status-${r.status}">${r.status}</span>
+            </div>
+            <div class="report-time">${timeAgo(r.timestamp)}</div>
+            ${r.status !== 'resolved' ? `<div class="report-actions"><button class="resolve-btn" onclick="event.stopPropagation();markResolved(${r.id})"><i class="fas fa-check-circle"></i> Mark Resolved</button></div>` : ''}
+        </div>`;
+    }).join('');
+}
+
+function filterMyReports(type, el) {
+    currentFilters.my = type;
+    el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    renderMyReports();
+}
+
+// ============ MAP LAYERS ============
+function toggleMapLayer(layerKey, checked) {
+    if (checked === undefined) {
+        if (map.hasLayer(layers[layerKey])) map.removeLayer(layers[layerKey]);
+        else map.addLayer(layers[layerKey]);
+    } else {
+        if (checked) map.addLayer(layers[layerKey]);
+        else map.removeLayer(layers[layerKey]);
+    }
+    updateLayerButtons();
+}
+
+function updateLayerButtons() {
+    document.getElementById('layerWaterBtn').classList.toggle('active', map.hasLayer(layers.water));
+    document.getElementById('layerDengueBtn').classList.toggle('active', map.hasLayer(layers.dengue));
+    document.getElementById('layerGarbageBtn').classList.toggle('active', map.hasLayer(layers.garbage));
+}
+
+function filterMapByStatus(status, el) {
+    el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    Object.values(layers).forEach(l => l.clearLayers());
+    let filtered = status === 'all' ? reports : reports.filter(r => r.status === status);
+    filtered.forEach(r => addMarkerToMap(r));
+}
+
+// ============ DASHBOARD ============
+function updateDashboard() {
+    const total = reports.length;
+    const resolved = reports.filter(r => r.status === 'resolved').length;
+    const pending = reports.filter(r => r.status === 'progress' || r.status === 'review').length;
+    const newCount = reports.filter(r => r.status === 'new').length;
+
+    document.getElementById('dashTotal').textContent = total;
+    document.getElementById('dashResolved').textContent = resolved;
+    document.getElementById('dashPending').textContent = pending;
+    document.getElementById('dashNew').textContent = newCount;
+
+    const waterCount = reports.filter(r => r.type === 'waterlogging').length;
+    const dengueCount = reports.filter(r => r.type === 'dengue').length;
+    const garbageCount = reports.filter(r => r.type === 'garbage').length;
+
+    const catContainer = document.getElementById('categoryBreakdown');
+    if (total === 0) {
+        catContainer.innerHTML = '<div class="empty-state" style="padding:20px"><p>Submit reports to see statistics</p></div>';
+    } else {
+        catContainer.innerHTML = `
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px"><span>🌊 Waterlogging</span><span>${waterCount}</span></div><div class="progress-track"><div class="progress-bar-fill" style="width:${(waterCount/total*100)}%;background:#4285f4"></div></div></div>
+            <div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px"><span>🦟 Dengue</span><span>${dengueCount}</span></div><div class="progress-track"><div class="progress-bar-fill" style="width:${(dengueCount/total*100)}%;background:#ea4335"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:4px"><span>🗑️ Garbage</span><span>${garbageCount}</span></div><div class="progress-track"><div class="progress-bar-fill" style="width:${(garbageCount/total*100)}%;background:#fbbc04"></div></div></div>`;
+    }
+
+    const areaContainer = document.getElementById('areaBreakdown');
+    if (total === 0) {
+        areaContainer.innerHTML = '<div class="empty-state" style="padding:20px"><p>Submit reports to see area statistics</p></div>';
+    } else {
+        const areaCounts = {};
+        reports.forEach(r => { areaCounts[r.locationName] = (areaCounts[r.locationName] || 0) + 1; });
+        const sorted = Object.entries(areaCounts).sort((a,b) => b[1]-a[1]).slice(0,8);
+        const maxCount = sorted[0][1];
+        areaContainer.innerHTML = sorted.map(([name,count]) => `
+            <div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:3px"><span>${name}</span><span style="font-weight:600">${count}</span></div><div class="progress-track"><div class="progress-bar-fill" style="width:${(count/maxCount*100)}%;background:var(--accent)"></div></div></div>
+        `).join('');
+    }
+
+    const actContainer = document.getElementById('recentActivity');
+    if (reports.length === 0) {
+        actContainer.innerHTML = '<div class="empty-state" style="padding:20px"><p>No activity yet</p></div>';
+    } else {
+        actContainer.innerHTML = reports.slice(0,5).map(r => {
+            const emoji = r.type === 'waterlogging' ? '🌊' : r.type === 'dengue' ? '🦟' : '🗑️';
+            return `<div class="report-item" style="padding:10px" onclick="showReportDetail(${r.id})"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.8rem;font-weight:600">${emoji} ${r.locationName}</span><span style="font-size:0.65rem;color:var(--text-muted)">${timeAgo(r.timestamp)}</span></div></div>`;
+        }).join('');
+    }
+
+    document.getElementById('impactResolved').textContent = resolved;
+    document.getElementById('impactVerifications').textContent = reports.reduce((s,r) => s + r.verifications, 0);
+    document.getElementById('impactComments').textContent = reports.reduce((s,r) => s + r.comments.length, 0);
+    document.getElementById('impactPhotos').textContent = reports.reduce((s,r) => s + (r.photos?.length || 0), 0);
+}
+
+// ============ LEADERBOARD ============
+function updateLeaderboard() {
+    const sortedUsers = [...users].sort((a,b) => b.reputationPoints - a.reputationPoints).slice(0, 10);
+    const userContainer = document.getElementById('userLeaderboard');
+    
+    if (sortedUsers.length === 0) {
+        userContainer.innerHTML = '<div class="empty-state" style="padding:20px"><p>No users yet. Be the first to register!</p></div>';
+    } else {
+        userContainer.innerHTML = sortedUsers.map((u, idx) => {
+            const userReports = reports.filter(r => r.reporterId === u.id).length;
+            const userVerifications = reports.reduce((sum, r) => sum + (r.verifiedBy.includes(u.id) ? 1 : 0), 0);
+            const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : '';
+            return `
+            <div class="leaderboard-item">
+                <div class="leaderboard-rank ${rankClass}">${idx + 1}</div>
+                <div class="leaderboard-info">
+                    <div class="leaderboard-name">${u.username}</div>
+                    <div class="leaderboard-detail">${userReports} reports • ${userVerifications} verifications</div>
+                </div>
+                <div class="leaderboard-score">${u.reputationPoints}</div>
+            </div>`;
+        }).join('');
+    }
+    
+    const schoolStats = {};
+    users.forEach(u => {
+        if (u.schoolName) {
+            if (!schoolStats[u.schoolName]) {
+                schoolStats[u.schoolName] = { reports: 0, resolved: 0, points: 0 };
+            }
+            const userReports = reports.filter(r => r.reporterId === u.id);
+            schoolStats[u.schoolName].reports += userReports.length;
+            schoolStats[u.schoolName].resolved += userReports.filter(r => r.status === 'resolved').length;
+            schoolStats[u.schoolName].points += u.reputationPoints;
+        }
+    });
+    
+    const sortedSchools = Object.entries(schoolStats).sort((a,b) => b[1].points - a[1].points).slice(0, 10);
+    const schoolContainer = document.getElementById('schoolLeaderboard');
+    
+    if (sortedSchools.length === 0) {
+        schoolContainer.innerHTML = '<div class="empty-state" style="padding:20px"><p>No schools registered yet</p></div>';
+    } else {
+        schoolContainer.innerHTML = sortedSchools.map(([name, stats], idx) => {
+            const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : '';
+            return `
+            <div class="leaderboard-item">
+                <div class="leaderboard-rank ${rankClass}">${idx + 1}</div>
+                <div class="leaderboard-info">
+                    <div class="leaderboard-name">${name}</div>
+                    <div class="leaderboard-detail">${stats.reports} reports • ${stats.resolved} resolved</div>
+                </div>
+                <div class="leaderboard-score">${stats.points}</div>
+            </div>`;
+        }).join('');
+    }
+}
+
+// ============ PROFILE ============
+function updateProfileView() {
+    if (!currentUser) {
+        document.getElementById('profileName').textContent = 'Not Logged In';
+        document.getElementById('profileEmail').textContent = 'Please login to view your profile';
+        document.getElementById('profileAvatar').textContent = '?';
+        document.getElementById('profileReports').textContent = '0';
+        document.getElementById('profileVerifications').textContent = '0';
+        document.getElementById('profilePoints').textContent = '0';
+        document.getElementById('profileBadges').innerHTML = '';
+        document.getElementById('activityLog').innerHTML = '<div class="empty-state" style="padding:20px"><p>Login to see your activity</p></div>';
+        return;
+    }
+    
+    document.getElementById('profileName').textContent = currentUser.username;
+    document.getElementById('profileEmail').textContent = currentUser.email;
+    document.getElementById('profileAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
+    
+    const myReports = reports.filter(r => r.reporterId === currentUser.id);
+    const myVerifications = reports.reduce((sum, r) => sum + (r.verifiedBy.includes(currentUser.id) ? 1 : 0), 0);
+    
+    document.getElementById('profileReports').textContent = myReports.length;
+    document.getElementById('profileVerifications').textContent = myVerifications;
+    document.getElementById('profilePoints').textContent = currentUser.reputationPoints;
+    
+    let badges = [];
+    if (myReports.length >= 1) badges.push('<span class="achievement-badge">🌱 First Report</span>');
+    if (myReports.length >= 5) badges.push('<span class="achievement-badge">⭐ Active Reporter</span>');
+    if (myReports.length >= 10) badges.push('<span class="achievement-badge">🏅 Senior Reporter</span>');
+    if (myVerifications >= 5) badges.push('<span class="achievement-badge">✅ Verified 5</span>');
+    if (myReports.filter(r => r.status === 'resolved').length >= 3) badges.push('<span class="achievement-badge">🎯 Problem Solver</span>');
+    if (currentUser.schoolName) badges.push(`<span class="achievement-badge">🎓 ${currentUser.schoolName}</span>`);
+    
+    document.getElementById('profileBadges').innerHTML = badges.join('');
+    
+    const activityLog = document.getElementById('activityLog');
+    const myActivities = [];
+    
+    myReports.forEach(r => {
+        myActivities.push({
+            type: 'report',
+            text: `Submitted report ${r.reportId} at ${r.locationName}`,
+            timestamp: r.timestamp
+        });
+        r.history.forEach(h => {
+            if (h.status !== 'new') {
+                myActivities.push({
+                    type: 'status',
+                    text: `Report ${r.reportId} status: ${h.status}`,
+                    timestamp: h.timestamp
+                });
+            }
+        });
+    });
+    
+    myActivities.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    if (myActivities.length === 0) {
+        activityLog.innerHTML = '<div class="empty-state" style="padding:20px"><p>No activity yet</p></div>';
+    } else {
+        activityLog.innerHTML = myActivities.slice(0, 15).map(a => `
+            <div style="padding:10px;background:var(--bg-primary);border-radius:var(--radius-sm);margin-bottom:8px;border:1px solid var(--border)">
+                <div style="font-size:0.8rem;font-weight:500">${a.text}</div>
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px">${timeAgo(a.timestamp)}</div>
+            </div>
+        `).join('');
+    }
+}
+
+// ============ BADGES ============
+function updateBadges() {
+    ['waterlogging','dengue','garbage'].forEach(type => {
+        const count = reports.filter(r => r.type === type && r.status !== 'resolved').length;
+        const el = document.getElementById(type === 'waterlogging' ? 'waterBadge' : type === 'dengue' ? 'dengueBadge' : 'garbageBadge');
+        if (count > 0) { el.textContent = count; el.style.display = 'inline'; }
+        else el.style.display = 'none';
+    });
+}
+
+// ============ NOTIFICATIONS ============
+function addNotification(report) {
+    const emoji = report.type === 'waterlogging' ? '🌊' : report.type === 'dengue' ? '🦟' : '🗑️';
+    notifications.unshift({
+        text: report.customMsg || `${emoji} New report ${report.reportId} at ${report.locationName}`,
+        time: new Date().toISOString()
+    });
+    if (notifications.length > 20) notifications = notifications.slice(0, 20);
+    localStorage.setItem('cleanbd_notifs', JSON.stringify(notifications));
+    document.getElementById('notifDot').style.display = 'block';
+    renderNotifications();
+}
+
+function renderNotifications() {
+    const container = document.getElementById('notifList');
+    if (notifications.length === 0) {
+        container.innerHTML = '<div class="empty-state" style="padding:20px"><p>No notifications yet</p></div>';
+        return;
+    }
+    container.innerHTML = notifications.slice(0,10).map(n => `
+        <div class="notif-item"><strong>${n.text}</strong><div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px">${timeAgo(n.time)}</div></div>
+    `).join('');
+}
+
+function toggleNotifications() {
+    document.getElementById('notifPanel').classList.toggle('show');
+    document.getElementById('notifDot').style.display = 'none';
+}
+
+// ============ ROUTES ============
+function findSafeRoute() {
+    const from = document.getElementById('routeFrom').value;
+    const to = document.getElementById('routeTo').value;
+    if (!from || !to) return showToast('Please select both points', 'error');
+    if (from === to) return showToast('Points must be different', 'error');
+
+    const [fromLat, fromLng] = from.split(',').map(Number);
+    const [toLat, toLng] = to.split(',').map(Number);
+    const hazards = reports.filter(r => r.type === 'waterlogging' && r.status !== 'resolved');
+
+    map.setView([(fromLat+toLat)/2, (fromLng+toLng)/2], 13);
+    L.polyline([[fromLat,fromLng],[toLat,toLng]], { color: '#34a853', weight: 4, opacity: 0.7, dashArray: '10, 6' }).addTo(map);
+    L.marker([fromLat,fromLng], { icon: makeIcon('#34a853','🟢') }).bindPopup('Start').addTo(map);
+    L.marker([toLat,toLng], { icon: makeIcon('#ea4335','🔴') }).bindPopup('Destination').addTo(map);
+
+    const container = document.getElementById('routeResults');
+    let warningHtml = hazards.length > 0
+        ? `<div class="info-banner" style="border-color:var(--warning);background:rgba(251,188,4,0.08)"><i class="fas fa-exclamation-triangle" style="color:var(--warning)"></i><p><strong>${hazards.length} active waterlogging report(s)</strong> in the system. Check the map for exact locations.</p></div>`
+        : `<div class="info-banner" style="border-color:var(--success);background:rgba(52,168,83,0.08)"><i class="fas fa-check-circle" style="color:var(--success)"></i><p>No active waterlogging reports. However, always stay alert during heavy rain.</p></div>`;
+
+    container.innerHTML = `${warningHtml}<div class="card"><div class="card-title"><div class="icon" style="background:rgba(52,168,83,0.1);color:var(--success)"><i class="fas fa-route"></i></div>Route Info</div><p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px">Route drawn on map from start to destination.</p><p style="font-size:0.75rem;color:var(--text-muted)">⚠️ This is a straight-line reference. Always verify local conditions.</p><button class="btn btn-outline btn-full" style="margin-top:12px" onclick="clearRoute()"><i class="fas fa-times"></i> Clear Route</button></div>`;
+    showToast('Route displayed on map', 'info');
+}
+
+function clearRoute() {
+    map.eachLayer(l => { if (l instanceof L.Polyline && !(l instanceof L.Polygon)) map.removeLayer(l); });
+    document.getElementById('routeResults').innerHTML = '';
+}
+
+// ============ SEARCH ============
+function searchLocation() {
+    const query = document.getElementById('mapSearch').value.trim().toLowerCase();
+    if (!query) return;
+    const areaMap = {
+        'farmgate':[23.7597,90.3746],'mirpur':[23.8042,90.3683],'dhanmondi':[23.7465,90.3762],
+        'gulshan':[23.7925,90.4072],'banani':[23.7935,90.4010],'uttara':[23.8740,90.3980],
+        'mohakhali':[23.7720,90.3930],'motijheel':[23.7330,90.4178],'old dhaka':[23.7105,90.3995],
+        'mohammadpur':[23.7655,90.3520],'tejgaon':[23.7610,90.3860],'jatrabari':[23.7200,90.4250],
+        'sayedabad':[23.7340,90.4200],'rampura':[23.7610,90.4130],'badda':[23.7806,90.4220],
+        'kuril':[23.8060,90.4250],'bashundhara':[23.8140,90.4340],'khilgaon':[23.7620,90.4280],'demra':[23.7230,90.4680]
+    };
+    if (areaMap[query]) {
+        map.setView(areaMap[query], 15);
+        showToast(`Showing ${query}`, 'info');
+    } else {
+        showToast('Location not found. Try: Farmgate, Mirpur, Dhanmondi, Gulshan, Uttara, etc.', 'error');
+    }
+}
+
+// ============ UTILITIES ============
+function saveReports() {
+    try {
+        localStorage.setItem('cleanbd_reports', JSON.stringify(reports));
+    } catch (e) {
+        const lite = reports.map(r => ({ ...r, photos: [] }));
+        localStorage.setItem('cleanbd_reports', JSON.stringify(lite));
+        showToast('Storage full. Photos removed from saved data.', 'info');
+    }
+}
+
+function timeAgo(isoString) {
+    const diff = Math.floor((new Date() - new Date(isoString)) / 1000);
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return `${Math.floor(diff/60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff/3600)} hours ago`;
+    if (diff < 604800) return `${Math.floor(diff/86400)} days ago`;
+    return new Date(isoString).toLocaleDateString();
+}
+
+function showToast(msg, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+    toast.innerHTML = `<i class="fas ${iconMap[type]}" style="color:var(--${type==='success'?'success':type==='error'?'danger':'info'})"></i> ${msg}`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3500);
+}
+
+function locateMe() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+                L.marker([pos.coords.latitude, pos.coords.longitude], { icon: makeIcon('#9c27b0','📍') }).bindPopup('<strong>Your Location</strong>').addTo(map);
+                showToast('Location found!', 'success');
+            },
+            () => showToast('Could not get location', 'error')
+        );
+    }
+}
+
+function resetMapView() {
+    map.setView([23.8103, 90.4125], 12);
+    if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
+}
+
+function exportData() {
+    if (reports.length === 0) return showToast('No reports to export', 'error');
+    const blob = new Blob([JSON.stringify(reports, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cleanbd_reports_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Data exported!', 'success');
+}
+
+function clearAllData() {
+    if (!confirm('Delete ALL reports? This cannot be undone.')) return;
+    reports = [];
+    saveReports();
+    renderAllMarkers();
+    refreshReportLists();
+    updateBadges();
+    showToast('All data cleared', 'info');
+}
+
+function showEmergency() { document.getElementById('sosModal').classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function toggleTheme() {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme');
+    html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    localStorage.setItem('cleanbd_theme', html.getAttribute('data-theme'));
+}
+
+const savedTheme = localStorage.getItem('cleanbd_theme');
+if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+// ============ INIT ============
+renderAllMarkers();
+refreshReportLists();
+updateBadges();
+updateLayerButtons();
+renderNotifications();
+updateUserUI();
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { 
+        closeModal('detailModal'); 
+        closeModal('sosModal'); 
+        closeModal('loginModal');
+        closeModal('registerModal');
+        closeModal('editProfileModal');
+        document.getElementById('notifPanel').classList.remove('show'); 
+    }
+});
+
+document.addEventListener('click', e => {
+    const panel = document.getElementById('notifPanel');
+    if (panel.classList.contains('show') && !panel.contains(e.target) && !e.target.closest('.top-btn')) panel.classList.remove('show');
+});
+</script>
+</body>
+</html>
