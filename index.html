@@ -2933,24 +2933,171 @@ function renderNotifications() {
 function toggleNotifications() { document.getElementById('notifPanel').classList.toggle('show'); document.getElementById('notifDot').style.display = 'none'; }
 
 // ============ ROUTES ============
-function findSafeRoute() {
+const routeLayer = L.layerGroup().addTo(map);
+let currentRoutes = [];
+let selectedRouteIdx = 0;
+
+// How far a flood "reaches" (metres) and how bad it is, by reported depth
+const DEPTH_RADIUS = { waist: 200, knee: 120, ankle: 60 };
+const DEPTH_WEIGHT = { waist: 6, knee: 3, ankle: 1 };
+// Each unit of flood weight adds this many seconds of "penalty" when ranking routes
+const FLOOD_PENALTY_SECONDS = 300;
+
+function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Shortest distance (metres) from point p to segment a-b. All are [lat, lng].
+function distToSegmentMeters(p, a, b) {
+    const R = 6371000, rad = Math.PI / 180, cosLat = Math.cos(p[0] * rad);
+    const toXY = pt => [(pt[1] - p[1]) * rad * cosLat * R, (pt[0] - p[0]) * rad * R];
+    const A = toXY(a), B = toXY(b);
+    const dx = B[0] - A[0], dy = B[1] - A[1];
+    const len2 = dx * dx + dy * dy;
+    let t = len2 ? -(A[0] * dx + A[1] * dy) / len2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(A[0] + t * dx, A[1] + t * dy);
+}
+
+// Which active waterlogging reports does this route pass through?
+function analyseRoute(coords, hazards) {
+    const hits = [];
+    hazards.forEach(h => {
+        const radius = DEPTH_RADIUS[h.depth] || 60;
+        const p = [h.lat, h.lng];
+        for (let i = 0; i < coords.length - 1; i++) {
+            if (distToSegmentMeters(p, coords[i], coords[i + 1]) <= radius) { hits.push(h); break; }
+        }
+    });
+    const score = hits.reduce((s, h) => s + (DEPTH_WEIGHT[h.depth] || 1), 0);
+    return { hits, score };
+}
+
+async function findSafeRoute() {
     const from = document.getElementById('routeFrom').value;
     const to = document.getElementById('routeTo').value;
     if (!from || !to) return showToast('Please select both points', 'error');
     if (from === to) return showToast('Points must be different', 'error');
     const [fromLat, fromLng] = from.split(',').map(Number);
     const [toLat, toLng] = to.split(',').map(Number);
-    map.setView([(fromLat+toLat)/2, (fromLng+toLng)/2], 13);
-    L.polyline([[fromLat,fromLng],[toLat,toLng]], { color: '#34a853', weight: 4, opacity: 0.7, dashArray: '10, 6' }).addTo(map);
-    L.marker([fromLat,fromLng], { icon: makeIcon('#34a853','🟢') }).bindPopup('Start').addTo(map);
-    L.marker([toLat,toLng], { icon: makeIcon('#ea4335','🔴') }).bindPopup('Destination').addTo(map);
-    const hazards = reports.filter(r => r.type === 'waterlogging' && r.status !== 'resolved');
     const container = document.getElementById('routeResults');
-    container.innerHTML = `<div class="info-banner" style="border-color:${hazards.length>0?'var(--warning)':'var(--success)'}"><i class="fas fa-exclamation-triangle" style="color:${hazards.length>0?'var(--warning)':'var(--success)'}"></i><p>${hazards.length} active waterlogging report(s). Check the map.</p></div><button class="btn btn-outline btn-full" style="margin-top:12px" onclick="clearRoute()"><i class="fas fa-times"></i> Clear Route</button>`;
-    showToast('Route displayed on map', 'info');
-}
-function clearRoute() { map.eachLayer(l => { if (l instanceof L.Polyline && !(l instanceof L.Polygon)) map.removeLayer(l); }); document.getElementById('routeResults').innerHTML = ''; }
 
+    container.innerHTML = `<div class="info-banner"><i class="fas fa-spinner fa-spin"></i><p>Finding routes along real roads...</p></div>`;
+
+    const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?alternatives=3&overview=full&geometries=geojson`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+
+    try {
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (data.code !== 'Ok' || !data.routes || !data.routes.length) throw new Error('No route found');
+
+        const hazards = reports.filter(r => r.type === 'waterlogging' && r.status !== 'resolved');
+
+        currentRoutes = data.routes.map(r => {
+            const coords = r.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+            const { hits, score } = analyseRoute(coords, hazards);
+            return {
+                coords, hits, score,
+                distance: r.distance,   // metres
+                duration: r.duration,   // seconds
+                cost: r.duration + score * FLOOD_PENALTY_SECONDS
+            };
+        });
+
+        // Best route first: lowest (travel time + flood penalty)
+        currentRoutes.sort((a, b) => a.cost - b.cost);
+        const fastestDur = Math.min(...currentRoutes.map(r => r.duration));
+        currentRoutes.forEach((r, i) => { r.isRecommended = i === 0; r.isFastest = r.duration === fastestDur; });
+
+        selectedRouteIdx = 0;
+        drawRoutes([fromLat, fromLng], [toLat, toLng]);
+        renderRouteResults();
+        showToast(`${currentRoutes.length} route${currentRoutes.length > 1 ? 's' : ''} found`, 'success');
+    } catch (err) {
+        clearTimeout(timer);
+        // Fallback: straight line so the user still sees something
+        routeLayer.clearLayers();
+        L.polyline([[fromLat, fromLng], [toLat, toLng]], { color: '#9aa0a6', weight: 4, opacity: 0.8, dashArray: '10, 6' }).addTo(routeLayer);
+        L.marker([fromLat, fromLng], { icon: makeIcon('#34a853', '🟢') }).bindPopup('Start').addTo(routeLayer);
+        L.marker([toLat, toLng], { icon: makeIcon('#ea4335', '🔴') }).bindPopup('Destination').addTo(routeLayer);
+        map.fitBounds([[fromLat, fromLng], [toLat, toLng]], { padding: [60, 60] });
+        currentRoutes = [];
+        container.innerHTML = `<div class="info-banner danger"><i class="fas fa-exclamation-triangle"></i><p>Could not load road routes (${escapeHtml(err.message)}). Check your internet connection. Showing a straight line only, which is not a real route.</p></div><button class="btn btn-outline btn-full" style="margin-top:12px" onclick="clearRoute()"><i class="fas fa-times"></i> Clear Route</button>`;
+        showToast('Routing service unavailable', 'error');
+    }
+}
+
+function drawRoutes(start, end) {
+    routeLayer.clearLayers();
+
+    // Alternatives first (grey, clickable), selected route on top
+    currentRoutes.forEach((r, i) => {
+        if (i === selectedRouteIdx) return;
+        L.polyline(r.coords, { color: '#9aa0a6', weight: 5, opacity: 0.7 })
+            .on('click', () => selectRoute(i))
+            .bindTooltip(`Route ${i + 1} — click to select`, { sticky: true })
+            .addTo(routeLayer);
+    });
+
+    const sel = currentRoutes[selectedRouteIdx];
+    const color = sel.hits.length === 0 ? '#34a853' : '#f57c00';
+    L.polyline(sel.coords, { color: '#ffffff', weight: 9, opacity: 0.9 }).addTo(routeLayer); // outline
+    const line = L.polyline(sel.coords, { color, weight: 6, opacity: 0.95 }).addTo(routeLayer);
+
+    // Highlight flooded spots on the selected route
+    sel.hits.forEach(h => {
+        L.circle([h.lat, h.lng], { color: '#ea4335', fillColor: '#ea4335', fillOpacity: 0.25, weight: 2, radius: DEPTH_RADIUS[h.depth] || 60 })
+            .bindPopup(`<div class="custom-popup"><h4>⚠️ Flooded on route</h4><p>${escapeHtml(h.locationName)}</p><p>Depth: ${escapeHtml(h.depth)}</p></div>`)
+            .addTo(routeLayer);
+    });
+
+    L.marker(start, { icon: makeIcon('#34a853', '🟢') }).bindPopup('Start').addTo(routeLayer);
+    L.marker(end, { icon: makeIcon('#ea4335', '🔴') }).bindPopup('Destination').addTo(routeLayer);
+    map.fitBounds(line.getBounds(), { padding: [60, 60] });
+}
+
+function selectRoute(i) {
+    if (!currentRoutes[i]) return;
+    selectedRouteIdx = i;
+    const first = currentRoutes[i].coords[0];
+    const last = currentRoutes[i].coords[currentRoutes[i].coords.length - 1];
+    drawRoutes(first, last);
+    renderRouteResults();
+}
+
+function renderRouteResults() {
+    const container = document.getElementById('routeResults');
+    const cards = currentRoutes.map((r, i) => {
+        const selected = i === selectedRouteIdx;
+        const km = (r.distance / 1000).toFixed(1);
+        const mins = Math.round(r.duration / 60);
+        const tags = [];
+        if (r.isRecommended) tags.push('<span class="badge-inline priority-low">✅ Recommended</span>');
+        if (r.isFastest) tags.push('<span class="badge-inline priority-medium">⚡ Fastest</span>');
+        const status = r.hits.length === 0
+            ? `<div style="font-size:0.78rem;color:var(--success);margin-top:6px"><i class="fas fa-check-circle"></i> No reported waterlogging on this route</div>`
+            : `<div style="font-size:0.78rem;color:var(--danger);margin-top:6px"><i class="fas fa-exclamation-triangle"></i> ${r.hits.length} waterlogged spot${r.hits.length > 1 ? 's' : ''}: ${r.hits.map(h => `${escapeHtml(h.locationName)} (${escapeHtml(h.depth)})`).join(', ')}</div>`;
+        return `<div class="report-item" style="${selected ? 'border-color:var(--accent);background:var(--accent-bg)' : ''}" onclick="selectRoute(${i})">
+            <div class="report-top"><div class="report-title">Route ${i + 1}</div><div style="display:flex;gap:4px;flex-wrap:wrap">${tags.join('')}</div></div>
+            <div class="report-meta"><i class="fas fa-road"></i> ${km} km &nbsp;•&nbsp; <i class="fas fa-clock"></i> ~${mins} min</div>
+            ${status}
+        </div>`;
+    }).join('');
+
+    container.innerHTML = `${cards}
+        <p style="font-size:0.7rem;color:var(--text-muted);margin:8px 0">Based on ${reports.filter(r => r.type === 'waterlogging' && r.status !== 'resolved').length} active community report(s). Travel times exclude live traffic.</p>
+        <button class="btn btn-outline btn-full" onclick="clearRoute()"><i class="fas fa-times"></i> Clear Route</button>`;
+}
+
+function clearRoute() {
+    routeLayer.clearLayers();
+    currentRoutes = [];
+    document.getElementById('routeResults').innerHTML = '';
+}
 // ============ SEARCH ============
 function searchLocation() {
     const query = document.getElementById('mapSearch').value.trim().toLowerCase();
