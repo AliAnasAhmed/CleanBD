@@ -75,7 +75,7 @@ input,select,textarea{font-family:inherit}
 .auth-features{display:flex;flex-direction:column;gap:16px}
 .auth-feature{display:flex;align-items:center;gap:14px;font-size:0.88rem;opacity:0.92}
 .auth-feature-icon{width:40px;height:40px;background:rgba(255,255,255,0.12);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;border:1px solid rgba(255,255,255,0.1)}
-.auth-footer-brand{font-size:0.7rem;opacity:0.5;margin-top:auto;padding-top:20px}
+.auth-footer-brand{font-size:0.72rem;opacity:0.7;margin-top:auto;padding-top:20px;letter-spacing:0.2px}
 .auth-right{flex:1;padding:44px 44px;display:flex;flex-direction:column;justify-content:center;overflow-y:auto;background:var(--bg-secondary)}
 .auth-right::-webkit-scrollbar{width:4px}
 .auth-right::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
@@ -585,8 +585,7 @@ textarea.form-input{resize:vertical;min-height:85px}
 </div>
 </div>
 </div>
-<div class="auth-footer-brand">© 2024 CleanBD — Community-Powered Environmental Reporting</div>
-</div>
+<div class="auth-footer-brand">© <span id="footerYear">2026</span> CleanBD. All rights reserved. &nbsp;·&nbsp; Community-powered environmental reporting for Bangladesh.</div>
 <div class="auth-right">
 <div class="auth-tabs">
 <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
@@ -2026,6 +2025,7 @@ function deleteAccount() {
 }
 
 // ============ MAP INIT ============
+document.getElementById('footerYear').textContent = new Date().getFullYear();
 const map = L.map('map', { zoomControl: false }).setView([23.8103, 90.4125], 12);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 L.control.scale({ imperial: false }).addTo(map);
