@@ -648,7 +648,7 @@ textarea.form-input{resize:vertical;min-height:85px}
 <!-- REGISTER FORM -->
 <div class="auth-form" id="authRegisterForm">
 <h3>Join CleanBD 🌿</h3>
-<p class="auth-subtitle">Create your account and start making a difference</p>
+<p class="auth-subtitle">Create your account and start making a difference!</p>
 <div class="auth-error" id="registerError"><i class="fas fa-exclamation-circle"></i><span></span></div>
 <div class="auth-success" id="registerSuccess"><i class="fas fa-check-circle"></i><span></span></div>
 <div class="auth-input-group">
@@ -3098,6 +3098,7 @@ function clearRoute() {
     currentRoutes = [];
     document.getElementById('routeResults').innerHTML = '';
 }
+
 // ============ SEARCH ============
 function searchLocation() {
     const query = document.getElementById('mapSearch').value.trim().toLowerCase();
