@@ -75,7 +75,11 @@ input,select,textarea{font-family:inherit}
 .auth-features{display:flex;flex-direction:column;gap:16px}
 .auth-feature{display:flex;align-items:center;gap:14px;font-size:0.88rem;opacity:0.92}
 .auth-feature-icon{width:40px;height:40px;background:rgba(255,255,255,0.12);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;border:1px solid rgba(255,255,255,0.1)}
-.auth-footer-brand{font-size:0.7rem;opacity:0.5;margin-top:auto;padding-top:20px}
+.auth-footer-brand{position:relative;z-index:1;margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,0.15);font-size:0.72rem;color:rgba(255,255,255,0.75);line-height:1.7}
+.auth-footer-links{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.auth-footer-links a{color:rgba(255,255,255,0.9);text-decoration:none;font-weight:500}
+.auth-footer-links a:hover{text-decoration:underline}
+.auth-footer-copy{opacity:0.8}
 .auth-right{flex:1;padding:44px 44px;display:flex;flex-direction:column;justify-content:center;overflow-y:auto;background:var(--bg-secondary)}
 .auth-right::-webkit-scrollbar{width:4px}
 .auth-right::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
@@ -585,7 +589,14 @@ textarea.form-input{resize:vertical;min-height:85px}
 </div>
 </div>
 </div>
-<div class="auth-footer-brand">© 2024 CleanBD — Community-Powered Environmental Reporting</div>
+<div class="auth-footer-brand">
+<div class="auth-footer-links">
+<a href="#">Privacy Policy</a><span>·</span>
+<a href="#">Terms of Service</a><span>·</span>
+<a href="#">Contact</a>
+</div>
+<div class="auth-footer-copy">© <span id="footerYear">2026</span> CleanBD. All rights reserved.</div>
+</div>
 </div>
 <div class="auth-right">
 <div class="auth-tabs">
@@ -834,25 +845,101 @@ Submit Waterlogging Report
 <label class="form-label">Area / Location <span class="req">*</span></label>
 <select class="form-select" id="wlLocation">
 <option value="">Choose area or click map...</option>
+
+<!-- ====== Central & Institutional Hubs ====== -->
 <option value="23.7597,90.3746">Farmgate (Bijoy Sarani)</option>
+<option value="23.7610,90.3860">Tejgaon</option>
+<option value="23.7516,90.3943">Karwan Bazar</option>
+<option value="23.7384,90.3957">Shahbagh</option>
+<option value="23.7320,90.3925">Dhaka University Campus</option>
+<option value="23.7341,90.3860">Nilkhet</option>
+<option value="23.7327,90.3850">New Market</option>
+<option value="23.7460,90.3935">Moghbazar</option>
+<option value="23.7500,90.4045">Eskaton</option>
+<option value="23.7485,90.4030">Malibagh</option>
+
+<!-- ====== Dhanmondi & West Dhaka ====== -->
+<option value="23.7465,90.3762">Dhanmondi 27</option>
+<option value="23.7460,90.3770">Dhanmondi 32</option>
+<option value="23.7365,90.3800">Dhanmondi (Science Lab)</option>
+<option value="23.7548,90.3685">Lalmatia</option>
+<option value="23.7370,90.3715">Jigatola</option>
+<option value="23.7435,90.3820">Kalabagan</option>
+<option value="23.7655,90.3520">Mohammadpur</option>
+<option value="23.7620,90.3420">Adabor</option>
+<option value="23.7710,90.3630">Shyamoli</option>
+<option value="23.7790,90.3645">Kalyanpur</option>
+
+<!-- ====== Gulshan, Banani, & Premium Zones ====== -->
+<option value="23.7925,90.4072">Gulshan 1</option>
+<option value="23.7937,90.4132">Gulshan 2</option>
+<option value="23.7935,90.4010">Banani 11</option>
+<option value="23.7900,90.4005">Banani (Kakoli)</option>
+<option value="23.7720,90.3930">Mohakhali</option>
+<option value="23.7795,90.3950">Mohakhali DOHS</option>
+<option value="23.7845,90.4020">Niketon</option>
+<option value="23.7995,90.4206">Baridhara R/A</option>
+<option value="23.8120,90.4160">Baridhara DOHS</option>
+
+<!-- ====== Mirpur Region ====== -->
 <option value="23.8042,90.3683">Mirpur 10</option>
 <option value="23.8130,90.3650">Mirpur 11</option>
-<option value="23.7465,90.3762">Dhanmondi 27</option>
-<option value="23.7720,90.3930">Mohakhali</option>
-<option value="23.7925,90.4072">Gulshan 1</option>
-<option value="23.7935,90.4010">Banani 11</option>
+<option value="23.7960,90.3540">Mirpur 1</option>
+<option value="23.8010,90.3600">Mirpur 2</option>
+<option value="23.8080,90.3700">Mirpur 6</option>
+<option value="23.8205,90.3665">Mirpur 7</option>
+<option value="23.8242,90.3625">Mirpur 12</option>
+<option value="23.8015,90.3790">Mirpur 14</option>
+<option value="23.8200,90.3550">Pallabi</option>
+<option value="23.7952,90.3718">Kazipara</option>
+<option value="23.7885,90.3740">Shewrapara</option>
+<option value="23.7810,90.3510">Gabtoli</option>
+
+<!-- ====== Uttara & Airport Sector Grid ====== -->
 <option value="23.8740,90.3980">Uttara Sector 3</option>
 <option value="23.8630,90.3890">Uttara Sector 7</option>
+<option value="23.8670,90.3950">Uttara Sector 1</option>
+<option value="23.8715,90.4025">Uttara Sector 4</option>
+<option value="23.8820,90.4000">Uttara Sector 5</option>
+<option value="23.8810,90.3910">Uttara Sector 9</option>
+<option value="23.8860,90.3870">Uttara Sector 10</option>
+<option value="23.8895,90.3860">Uttara Sector 11</option>
+<option value="23.8910,90.3940">Uttara Sector 13</option>
+<option value="23.8915,90.3740">Uttara Diabari (Sector 18)</option>
+<option value="23.8520,90.4075">Hazrat Shahjalal Int'l Airport</option>
+<option value="23.8320,90.4160">Khilkhet</option>
+<option value="23.8360,90.4185">Nikunja 2</option>
+
+<!-- ====== Eastern & North-Eastern Dhaka ====== -->
+<option value="23.8140,90.4340">Bashundhara R/A</option>
+<option value="23.8060,90.4250">Kuril</option>
+<option value="23.8080,90.4180">Nadda</option>
+<option value="23.7806,90.4220">Badda</option>
+<option value="23.7610,90.4130">Rampura</option>
+<option value="23.7650,90.4285">Banasree</option>
+<option value="23.7690,90.4280">Aftabnagar</option>
+<option value="23.7510,90.4220">Khilgaon</option>
+<option value="23.8250,90.4900">Purbachal New Town</option>
+
+<!-- ====== Southern & Motijheel Commercial Grid ====== -->
 <option value="23.7330,90.4178">Motijheel</option>
-<option value="23.7105,90.3995">Old Dhaka (Nawabpur)</option>
-<option value="23.7655,90.3520">Mohammadpur</option>
-<option value="23.7610,90.3860">Tejgaon</option>
+<option value="23.7290,90.4130">Dilkusha</option>
+<option value="23.7315,90.4070">Paltan</option>
+<option value="23.7250,90.4155">Kamalapur Railway Station</option>
 <option value="23.7200,90.4250">Jatrabari</option>
 <option value="23.7340,90.4200">Sayedabad</option>
-<option value="23.7610,90.4130">Rampura</option>
-<option value="23.7806,90.4220">Badda</option>
-<option value="23.8060,90.4250">Kuril</option>
-<option value="23.8140,90.4340">Bashundhara R/A</option>
+<option value="23.7170,90.4290">Demra</option>
+
+<!-- ====== Old Dhaka ====== -->
+<option value="23.7105,90.3995">Old Dhaka (Nawabpur)</option>
+<option value="23.7081,90.4121">Sadarghat</option>
+<option value="23.7189,90.3882">Lalbagh (Fort Area)</option>
+<option value="23.7155,90.3940">Chaukbazar</option>
+<option value="23.7215,90.4160">Wari</option>
+<option value="23.7120,90.4210">Sutrapur</option>
+<option value="23.7040,90.4270">Gendaria</option>
+<option value="23.6820,90.3820">Keraniganj</option>
+
 <option value="custom">📍 Custom (click map)</option>
 </select>
 </div>
@@ -2725,6 +2812,7 @@ refreshReportLists();
 updateBadges();
 updateLayerButtons();
 renderNotifications();
+document.getElementById('footerYear').textContent = new Date().getFullYear();
 checkAuth();
 
 document.addEventListener('keydown', e => {
